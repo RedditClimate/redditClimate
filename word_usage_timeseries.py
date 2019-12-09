@@ -1,3 +1,7 @@
+"""
+Build a plot of the usage of various words and phrases in a subreddit over time
+"""
+
 import numpy as np
 import requests
 import sys
@@ -14,45 +18,31 @@ author = None
 words = ['global warming', 'climate change']
 endpoint = 'comment'
 
-reference_time_series = []
-# reference_wordcount = []
-time_series = {}
+reference_time_series = [] # stores a list of the created_utc fields for all the content
+time_series = {} # for each word, stores a list of the created_utc fields for the content containing that word
+
+# initialize the dict with each of the words
 for w in words:
     time_series[w] = []
 
 def build_timeseries(content):
+    # content is a list of submissions or comments
     for c in content:
         for w in words:
             # check if the word is in the title, body or selftext
             if ('title' in c and w in c['title'].lower())\
             or ('selftext' in c and w in c['selftext'].lower())\
             or ('body' in c and w in c['body'].lower()):
+                # if so, add the created_utc field to the list
                 time_series[w].append(c['created_utc'])
 
         # also maintain a reference of all content timestamps so that
         # we can compare the word frequency
         reference_time_series.append(c['created_utc'])
 
-# def save_words(content):
-#     for c in content:
-
-
-# def build_wordcount(content):
-#     for c in content:
-
-#         ref_count = 0
-#         count = {}
-
-#         for field in ['title', 'selftext', 'body']:
-#             if field in c:
-#                 ref_count += len(c[field].split())
-#                 for w in words:
-#                     count += c[field].count(w)
-
-
-
-#         reference_wordcount.append([c['created_utc'], ])
-
+# convert the lists of created_utc stamps into a usage frequency graph
+# by histograming the timestamps. Divide by the refence histogram to get
+# word frequencies. then plot the resulting timeseries
 def plot_histograms(num_bins):
     start_time = min(reference_time_series)
     end_time = max(reference_time_series)

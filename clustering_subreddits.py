@@ -155,20 +155,9 @@ def get_similar_reddits(subreddit, data):
 
 
 if __name__ == '__main__':
-    # data = generate_matrix(subreddits)
-    # data = remove_too_small(data, 1500)
-    # save('big_matrix.pkl', data)
-    # data = load('generated_data/membership_matrix_10000_recent_submissions.pkl')
     data = load('generated_data/big_matrix.pkl')
     data = remove_too_small(data, 900)
 
     data = sort_by_similarity( data, sys.argv[1])
     y = cluster_matrix(data, 5)
     pca_matrix(data, y)
-    # print('\n'.join(data[0][:20]))
-    # # y = cluster_matrix(data)
-    # pca_matrix(data)
-    # G = cliques(data, sys.argv[1])
-    # subreddits, authors, M = data
-
-    # print('\n'.join(get_similar_reddits('climateskeptics', data)))

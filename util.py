@@ -5,7 +5,7 @@ pushshift_url = 'https://api.pushshift.io/reddit/search'
 
 rate_limit = 120
 
-params = {
+default_params = {
     'size': 1000,
     'sort': 'created_utc',
     'filter': 'subreddit,author,body,title,selftext,created_utc,url'
@@ -71,3 +71,48 @@ def pushshift_get(endpoint, params={}, max_retries=5):
             print(e)
 
     return None
+
+
+# iterate backwards in time and to get everything
+def pushshift_accumulate(subreddit, endpoint='comment', params=default_params):
+    params['created_utc'] = int(time.time())
+    params['sort'] = 'created_utc'
+
+    content = []
+    while True:
+
+        resp = pushshift_get(endpoint, params)
+        if resp is None:
+            continue
+        elif resp == []:
+            break
+        else:
+            content += resp
+            params['before'] = resp[-1]['created_utc']
+
+        # request_succeeded = False
+        # while not request_succeeded:
+        #     try:
+        #         resp = requests.get(url, timeout=5)
+        #         if resp.status_code == 200:
+        #             request_succeeded = True
+        #             resp_json = resp.json()
+        #             # if the json is empty, we've completed the search
+        #             if len(resp_json['data']) == 0:
+        #                 more_to_get = False
+        #             # otherwise append the results to our growing list of content
+        #             else:
+        #                 content += resp_json['data']
+        #                 params['before'] = resp_json['data'][-1]['created_utc']
+        #                 print(params['before'])
+
+        #         else:
+        #             print(resp.status_code, '\n', resp.content)
+        #             print('Request for %s failed' % url)
+        #             time.sleep(1)
+        #     except Exception as e:
+        #         print(e)
+
+        # time.sleep(60.0/rate_limit)
+
+    return content

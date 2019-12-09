@@ -13,50 +13,6 @@ users_files = ['comment_authors_climateskeptics.txt', 'comment_authors_green.txt
 subreddit_files = ['subreddits/big_list_of_subreddits.txt']
 
 
-# iterate backwards in time and to get everything
-def get_all(subreddit, endpoint='comment', author=None):
-    params = {
-        'subreddit': subreddit,
-        'sort': 'created_utc',
-        'size': 1000,
-        'params': int(time.time())
-    }
-    if author is not None: params['author'] = ','.join(author)
-
-    content = []
-    more_to_get = True # true until we run out of content
-
-    while more_to_get:
-        url = get_url(pushshift_url, endpoint, params)
-
-        request_succeeded = False
-        while not request_succeeded:
-            try:
-                resp = requests.get(url, timeout=5)
-                if resp.status_code == 200:
-                    request_succeeded = True
-                    resp_json = resp.json()
-                    # if the json is empty, we've completed the search
-                    if len(resp_json['data']) == 0:
-                        more_to_get = False
-                    # otherwise append the results to our growing list of content
-                    else:
-                        content += resp_json['data']
-                        params['before'] = resp_json['data'][-1]['created_utc']
-                        print(params['before'])
-
-                else:
-                    print(resp.status_code, '\n', resp.content)
-                    print('Request for %s failed' % url)
-                    time.sleep(1)
-            except Exception as e:
-                print(e)
-
-        time.sleep(60.0/rate_limit)
-
-    return content
-
-
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         print('Please supply a filename to save the matrix.')
@@ -82,8 +38,8 @@ if __name__ == '__main__':
 
             user_batch = users[j_lower:j_upper]
 
-            comments = get_all(subreddit, endpoint='comment', author=user_batch)
-            submissions = get_all(subreddit, endpoint='submission', author=user_batch)
+            comments = pushshift_accumulate(subreddit, endpoint='comment', author=user_batch)
+            submissions = pushshift_accumulate(subreddit, endpoint='submission', author=user_batch)
             print('Collected {} comments and {} submissions'.format(len(comments), len(submissions)))
 
             comment_authors = set([c['author'] for c in comments])

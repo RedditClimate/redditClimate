@@ -37,7 +37,7 @@ def count_links_in_submissions(content):
 			else:
 				links[domain] = 1
 
-def build_links(subreddit):
+def build_links(subreddit, params=default_params):
 	params['subreddit'] = subreddit
 
 	try: # wrap in a try-except so we can stop early

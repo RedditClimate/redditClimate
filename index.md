@@ -12,6 +12,10 @@
 
 ### Clustering
 
+### Word usage trends
+
+![Comments in the subreddit r/Green that mention climate change or global warming](figures/green_comments_over_time.png)
+
 ### Linking
 
 ### Sentiment Analysis
