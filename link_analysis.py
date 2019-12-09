@@ -1,3 +1,6 @@
+""" Figure out where submissions in a subreddit are linking to
+"""
+
 import numpy as np
 import requests
 import sys
@@ -8,7 +11,6 @@ from util import *
 from urllib.parse import urlparse  
 from matplotlib import pyplot as plt
 
-
 subreddit = 'climateskeptics'
 if len(sys.argv) > 1:
     subreddit = sys.argv[1]
@@ -16,16 +18,10 @@ if len(sys.argv) > 1:
 endpoint = 'submission'
 
 links = {}
-links_to_ignore = ['www.reddit.com', 'www.youtube.com', 'i.redd.it', 'youtu.be']
+# links_to_ignore = ['www.reddit.com', 'www.youtube.com', 'i.redd.it', 'youtu.be'] # TODO
 
 def get_domain(url):
 	return urlparse(url).netloc
-
-def find_url(string): 
-    # findall() has been used  
-    # with valid conditions for urls in string 
-    url = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+] |[!*\(\), ]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', string) 
-    return [re.split('\.|\/', url)[2] for url in urls]
 
 def count_links_in_submissions(content):
 	for c in content:
@@ -59,7 +55,7 @@ def save_links(links):
 	with open('generated_data/link_{}.pkl'.format(subreddit), 'wb') as f:
 		pickle.dump(links, f)
 
-def analyze_links(filename):
+def sort_links(filename):
 	with open(filename, 'rb') as f:
 		links = pickle.load(f)
 
@@ -75,5 +71,5 @@ def analyze_links(filename):
 if __name__ == '__main__':
 	links = build_links(subreddit)
 	save_links(links)
-	analyze_links('generated_data/link_{}.pkl'.format(subreddit))
+	sort_links('data/link_{}.pkl'.format(subreddit))
 

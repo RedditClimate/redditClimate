@@ -1,3 +1,7 @@
+""" A set of experiments which generate a matrix indiciating which
+users are active in which subreddits, and clustering or embedding the membership matrix
+"""
+
 import numpy as np
 import pickle
 import sys
@@ -12,7 +16,8 @@ import networkx as nx
 
 subreddits = load_set_from_list_of_files(['subreddits/big_list_of_subreddits.txt'])
 
-
+# Generated a matrix where each row is a subreddit and each column is a users.
+# ones are placed when a user has posted in a subreddit recently
 def generate_matrix(subreddits):
     m_list = {}
     authors = set()
@@ -32,13 +37,6 @@ def generate_matrix(subreddits):
         for j, a in enumerate(authors):
             M[i,j] = a in m_list[s]
 
-
-    c = subreddits.index('climateskeptics')
-    dists = ((M - M[None, c])**2).sum(axis=1)
-    idx = np.argsort(dists)
-    print(np.array(subreddits)[idx])
-
-
     data = (subreddits, authors, M)
     return data
 
@@ -50,6 +48,9 @@ def load(input_filename):
     with open(input_filename, 'rb') as f:
         return pickle.load(f)
 
+# project the membership matrix down into fewer dimensions
+# and plot points for each of the subreddits
+# subreddits can colored using the y label vector
 def pca_matrix(data, y=None):
     subreddits, authors, M = data
 
@@ -59,12 +60,13 @@ def pca_matrix(data, y=None):
 
     fig, ax = plt.subplots()
     ax.scatter(*projected.T, c=y)
-    for i, s in enumerate(subreddits): 
+    for i, s in enumerate(subreddits):
         ax.annotate(s, projected[i])
 
     plt.show()
 
-
+# sort all the subreddits by how similar they are to the
+# given subreddit. return the sorted matrix and subreddits list
 def sort_by_similarity(data, subreddit):
     subreddits, authors, M = data
 
@@ -81,12 +83,11 @@ def sort_by_similarity(data, subreddit):
     subreddits = np.array(subreddits)[indices]
     M = M[indices]
 
-
-
     return subreddits, authors, M
 
+# create and plot an adjacency where the distance between two subreddits is
+# the euclidean distance between their membership vectors
 def visualize_matrix(data):
-    # data = sort_by_similarity(data, 'climateskptics')
     subreddits, authors, M = data
 
     d = cdist(M, M)
@@ -98,7 +99,9 @@ def visualize_matrix(data):
     ax.set_yticklabels([''] + list(subreddits))
     plt.show()
 
-
+# find the cliques in the graph contining a certain subreddit
+# since cliques rely on unweighted graphs, we remove edges which are below
+# the mean weight
 def cliques(data, subreddit):
     subreddits, authors, M = data
     d = cdist(M, M)
@@ -108,7 +111,8 @@ def cliques(data, subreddit):
     for c in cliques:
         print(np.array(subreddits)[c])
 
-
+# project the graph down into two dimensions where nodes with greater
+# edge weights are drawn closer together
 def draw_flat_graph(data):
     subreddits, authors, M = data
     d = cdist(M, M)
@@ -122,6 +126,7 @@ def draw_flat_graph(data):
     nx.draw_networkx_labels(G,pos,labels)
     plt.show()
 
+# use kmeans to cluster the subreddits based on their membership vectors
 def cluster_matrix(data, n=2):
     subreddits, authors, M = data
 
@@ -130,34 +135,22 @@ def cluster_matrix(data, n=2):
 
     return y
 
-
+# remove subreddits from the matrix which have too few contributers
 def remove_too_small(data, n):
     subreddits, authors, M = data
     keep = M.sum(axis=1) > n
 
     return np.array(subreddits)[keep], authors, M[keep]
 
-def get_similar_reddits(subreddit, data):
-    subreddits, authors, M = data
-    if subreddit not in subreddits:
-        print('Couldnt find subreddit {}'.format(subreddit))
-        return None
-
-
-    d = cdist(M, M)
-    i = list(subreddits).index(subreddit)
-    distances = d[i]
-    print
-    indices = np.argsort(distances)
-    return np.array(subreddits)[indices]
-
-
 
 
 if __name__ == '__main__':
-    data = load('generated_data/big_matrix.pkl')
-    data = remove_too_small(data, 900)
+    # data = generate_matrix(subreddit)
+    # save('data/big_matrix.pkl', data)
 
-    data = sort_by_similarity( data, sys.argv[1])
+    data = load('data/big_matrix.pkl')
+    data = remove_too_small(data, 900)
+    data = sort_by_similarity(data, sys.argv[1])
+
     y = cluster_matrix(data, 5)
     pca_matrix(data, y)

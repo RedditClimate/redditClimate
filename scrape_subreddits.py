@@ -1,3 +1,7 @@
+""" pull a list of subreddits where posts have been made about any of the
+listed words
+"""
+
 import numpy as np
 import pickle
 import requests

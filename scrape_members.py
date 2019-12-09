@@ -1,3 +1,6 @@
+""" scrape all the recent posters in a subreddit
+"""
+
 import numpy as np
 import pickle
 import requests
@@ -5,7 +8,8 @@ import sys
 import time
 from util import *
 
-# iterate backwards in time and to get everything
+# iterate backwards in time and to get a list of authors that have
+# posted in the subreddit
 def get_authors(subreddit, endpoint='comment', max_num_authors=None):
     params = {
         'subreddit': subreddit,
