@@ -264,16 +264,16 @@ For example, if users alice and candice have posted in r/climateskeptics but bob
 
 |                          | alice | bob | candice | david |
 |--------------------------|-------|-----|---------|-------|
-|  r/climateskeptics       |   1   |  0  |    1    |   0   |
-|  r/conservative          |   1   |  0  |    0    |   1   |
-|  r/environmental_science |   0   |  1  |    1    |   1   |
+|  **r/climateskeptics**       |   1   |  0  |    1    |   0   |
+|  **r/conservative**          |   1   |  0  |    0    |   1   |
+|  **r/environmental_science** |   0   |  1  |    1    |   1   |
 
 If we have vectors for multiple subreddits, we end up building a matrix, where each row is a vector for the the subreddits, and each column is a vector indicating where each user have been active. The code to generate this matrix lives in [clustering_subreddits.py](https://github.com/IzzyBrand/redditClimate/blob/master/clustering_subreddits.py)
 
 ```python
 def generate_matrix(subreddits):
     membership_list = {} # dict from subreddit -> membership set
-    authors = set() # a set containing all the authors accross subreddits
+    authors = set() #      set containing all the authors accross subreddits
 
     # for each subreddit, get the membership set
     for s in subreddits:
@@ -296,7 +296,7 @@ def generate_matrix(subreddits):
     return data
 ```
 
-This function takes a while to run, depending on how many authors we request from `get_authors` (defined in [scrape_members.py](https://github.com/IzzyBrand/redditClimate/blob/master/scrape_members.py)), and how many subreddits we pass in the argument list. Once we've built the matrix, we can use unsupervised learning to cluster subreddits based on their similarity. In this case, we'll explore sklearn's `KMeans`.
+This function takes a while to run, depending on how many authors we request from `get_authors` (defined in [scrape_members.py](https://github.com/IzzyBrand/redditClimate/blob/master/scrape_members.py)), and how many subreddits we pass in the argument list. Once we've built the matrix, we can use unsupervised learning to cluster subreddits based on their similarity. In this case, we'll explore sklearn's `KMeans`. It's worth noting that KMeans exhibits the implicit prior that each of our clusters should be roughly the same size, which may or may not be true depending on the data...
 
 ```python
 def cluster_matrix(data, n=2):
@@ -304,7 +304,37 @@ def cluster_matrix(data, n=2):
     return KMeans(n_clusters=n).fit_predict(M)
 ```
 
-This function will return a vector of labels, one for each subreddit. Each label will be an integer specifying which cluster the subreddit has been assigned to. We could print out and read these clusters of subreddits, but let's take things a step farther and try to visualize our data. 
+This function will return a vector of labels, one for each subreddit. Each label will be an integer specifying which cluster the subreddit has been assigned to, where the argument _n_ specifies the number of clusters to build. We could print out and read these clusters of subreddits, but let's take things a step farther and try to visualize our data. Unfortunately, we can't directly plot high-dimensional data (the dimensionality of our data is the number of unique users). Instead, we'll use PCA to project our data into a lower dimension. We're using `matplotlib` to scatterplot the results, and we color each point according to the `labels` obtained with KMeans.
+
+```python
+def pca_matrix(data, labels=None):
+    subreddits, authors, M = data
+
+    # project the matrix into two dimensions
+    pca = KernelPCA(n_components=2)
+    pca.fit(M)
+    projected = pca.transform(M)
+
+    # and plot the results!
+    fig, ax = plt.subplots()
+    ax.scatter(*projected.T, c=labels)
+    for i, s in enumerate(subreddits):
+        ax.annotate(s, projected[i])
+
+    plt.show()
+```
+
+Putting it all together 
+
+```python
+data = generate_matrix(subreddits) 
+data = remove_too_small(data, 900) # some subreddits don't have enough members
+y = cluster_matrix(data, 4) # cluster with 5 clusters
+pca_matrix(data, y)
+```
+where `subreddits` is a list of subreddits and `remove_too_small` removes subreddit vectors with fewer than a certain number of members. This generates the plot:
+
+![PCA clustering](figures/4_cluster_pca.png)
 
 ### Word usage trends
 

@@ -58,15 +58,17 @@ def load(input_filename):
 # project the membership matrix down into fewer dimensions
 # and plot points for each of the subreddits
 # subreddits can colored using the y label vector
-def pca_matrix(data, y=None):
+def pca_matrix(data, labels=None):
     subreddits, authors, M = data
 
+    # project the matrix into two dimensions
     pca = KernelPCA(n_components=2)
     pca.fit(M)
     projected = pca.transform(M)
 
+    # and plot the results!
     fig, ax = plt.subplots()
-    ax.scatter(*projected.T, c=y)
+    ax.scatter(*projected.T, c=labels)
     for i, s in enumerate(subreddits):
         ax.annotate(s, projected[i])
 
@@ -152,8 +154,7 @@ if __name__ == '__main__':
     save('data/big_matrix.pkl', data)
 
     data = load('data/big_matrix.pkl')
-    data = remove_too_small(data, 900)
-    data = sort_by_similarity(data, sys.argv[1])
+    data = remove_too_small(data, 900) # some subreddits don't have enough members
 
     y = cluster_matrix(data, 5)
     pca_matrix(data, y)
