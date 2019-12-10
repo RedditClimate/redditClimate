@@ -208,7 +208,16 @@ for subreddit in ("climateskeptics", "sustainability"):
 
 
 
-### Clustering
+### Clustering Subreddits
+
+Each subreddit represents a community, so a natural line of inquiry is to examine how various subreddits relate to eachother. Perhaps the simplest approach to this task is to examine the overlap in members between two subreddits. On Reddit, an invididual's subscriptions to various subreddits are kept anonmymous. We were able to find [third party tools](https://www.redditinvestigator.com/) which can scrape subscription information for individual users, but each query takes on the order of minutes. A much quicker approach to proxy subscription information is to see which users have made submissions or comments in a subreddit.
+
+For each subreddit that we would like to investigate we
+
+1. pull the _n_ most recent posts (submissions or comments)
+2. Find the unique authors which created those posts (using a python `set`)
+
+We now have a set of of contributors for each subreddit — let's call these sets $s_1 \dots s_k$ for the $k$ subreddits.
 
 ### Word usage trends
 
