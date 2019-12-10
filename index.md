@@ -1,7 +1,3 @@
-<script id="MathJax-script" async
-  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-</script>
-
 # Analyzing Climate Change Discourse and Communities on Reddit
 
 ## Introduction
@@ -212,7 +208,7 @@ for subreddit in ("climateskeptics", "sustainability"):
 
 
 
-### Clustering Subreddits
+### Subreddit Similarity
 
 Each subreddit represents a community, so a natural line of inquiry is to examine how various subreddits relate to eachother. Perhaps the simplest approach to this task is to examine the overlap in members between two subreddits. On Reddit, an invididual's subscriptions to various subreddits are kept anonmymous. We were able to find [third party tools](https://www.redditinvestigator.com/) which can scrape subscription information for individual users, but each query takes on the order of minutes. A much quicker approach to proxy subscription information is to see which users have made submissions or comments in a subreddit.
 
@@ -221,11 +217,13 @@ For each subreddit that we would like to investigate we
 1. pull the _n_ most recent posts (submissions or comments)
 2. Find the unique authors which created those posts (using a python `set`)
 
-We now have a set of of contributors for each subreddit — let's call these sets $s_1 \dots s_k$ for the $k$ subreddits. We can now consider simple set-comparison metrics, like the [Jaccard Index](https://en.wikipedia.org/wiki/Jaccard_index)
+We now have a set of of contributors for each subreddit. We can now consider simple set-comparison metrics, like the [Jaccard Index](https://en.wikipedia.org/wiki/Jaccard_index) (aka Intersection over Union)
 
-$$J(A,B) = \frac{|A \cap B|}{|A \cup B|}$$
+<p align="center">
+  <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/eaef5aa86949f49e7dc6b9c8c3dd8b233332c9e7" alt="Intersection over union"/>
+</p>
 
-which is a measure of similarity between sets $A$ and $B$. We define the Jaccard index in [clustering_subreddits.py](https://github.com/IzzyBrand/redditClimate/blob/master/clustering_subreddits.py)
+which is a measure of similarity between sets _A_ and _B_. We define the Jaccard index in [clustering_subreddits.py](https://github.com/IzzyBrand/redditClimate/blob/master/clustering_subreddits.py)
 
 ```python
 def intersection_over_union(a, b):
@@ -249,6 +247,16 @@ This prints
 r/climateskeptics with r/environmental_science 0.006036217303822937
 r/climateskeptics with r/conservative 0.015847216578626575
 ```
+
+Indicating that the _r/climateskeptics_ community has more in common with _r/conservative_ than it does with _r/environmental_science_.
+
+### Clustering Subreddits
+
+Ideally we wouldn't have to hand-pick pairs of subreddits to compare, because in doing so we are potentially restricting ourselves to only find trends which we already believe to be present in the data. In order to cast a wider net, we'd like to pursue an analysis which compares many subreddits at once, and discovers trends on its own. In this experiment we consider clustering subreddits based on their membership sets (from the previous section) and visualizing those clusters with dimensionality reduction.
+
+In particular, we will use [sklearn's implementation of PCA](https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html) for dimensionality reduction and [KMeans](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html) for clustering, though any number of alternative methods may apply here.
+
+Both of these methods expect data points with vector-representations, but we currently have sets of members for each subreddit. In order to create a vector for each subreddit, we simply create a vector 
 
 ### Word usage trends
 
