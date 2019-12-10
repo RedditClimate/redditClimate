@@ -22,14 +22,82 @@ Reddit is special among the large social-media platforms in that it provides a f
 
 
 The pushshift API has two active endpoints, which can be found at:
-1. https://api.pushshift.io/reddit/search/comment
-2. https://api.pushshift.io/reddit/search/submission
 
-Try following these links and inspect the results in your browser.
+1. Comment Endpoint: <https://api.pushshift.io/reddit/search/comment>
+2. Submission Endpoint: <https://api.pushshift.io/reddit/search/submission>
 
-If we go to https://api.pushshift.io/meta, we'll see that the Pushshift API has a rate limit of 120 requests per minute - that's one every 0.5 seconds. Therefore, we will want to slow our requests down by waiting 0.5 seconds between requests.
+Try following these links and inspect the results in your browser. For the comments endpoint, you should see something like this:
+
+```JSON
+{
+    "data": [
+        {
+            "all_awardings": [],
+            "approved_at_utc": null,
+            "associated_award": null,
+            "author": "12UglyTacos",
+            "author_flair_background_color": null,
+            "author_flair_css_class": null,
+            "author_flair_richtext": [],
+            "author_flair_template_id": null,
+            "author_flair_text": null,
+            "author_flair_text_color": null,
+            "author_flair_type": "text",
+            "author_fullname": "t2_g0vwsy8",
+            "author_patreon_flair": false,
+            "author_premium": false,
+            "awarders": [],
+            "banned_at_utc": null,
+            "body": "Good luck girl! Let us know how you do! \n\n&lt;3",
+            "can_mod_post": false,
+            "collapsed": false,
+            "collapsed_because_crowd_control": null,
+            "collapsed_reason": null,
+            "created_utc": 1575947859,
+            "distinguished": null,
+            "edited": false,
+            "gildings": {},
+            "id": "facv822",
+            "is_submitter": true,
+            "link_id": "t3_e72kna",
+            "locked": false,
+            "no_follow": true,
+            "parent_id": "t1_f9xve3h",
+            "permalink": "/r/entwives/comments/e72kna/decided_my_2020_resolution_was_to_learn_to_french/facv822/",
+            "retrieved_on": 1575947860,
+            "score": 1,
+            "send_replies": true,
+            "steward_reports": [],
+            "stickied": false,
+            "subreddit": "entwives",
+            "subreddit_id": "t5_2s7a6",
+            "total_awards_received": 0
+        },
+        ...
+```
+
+As we can see from the JSON result, each comment has a lot of associated information that might be useful to us. Here are some of the fields that stand out as particularly useful:
+
+*  `"body"`: the actual text of the comment
+*  `"author"`: the username of the user who submitted the comment
+*  `"subreddit"`: the subreddit that the comment is in
+*  `"created_utc"`: a unix timestamp indicating when the comment was created
+
+The result returned by the submission endpoint has a similar structure, but with different fields for each submission. Here's a descripton of some of the relevant fields for each submission:
+
+*  `"title"`: the title of the submission
+*  `"selftext"`: the body of text inside the submission (optional: not all submissions have selftext)
+*  `"domain"`: the domain of a website that the submission links to (optional: not all submissions have domains)
+*  "`subreddit_subscribers`": the number of members in the subreddit of this submission
+*  `"author"`: the username of the user who submitted the submission
+*  `"subreddit"`: the subreddit that the comment is in
+*  `"created_utc"`: a unix timestamp indicating when the submission was created
+
+
+If we go to <https://api.pushshift.io/meta>, we'll see that the Pushshift API has a rate limit of 120 requests per minute - that's one every 0.5 seconds. Therefore, we will want to slow our requests down by waiting 0.5 seconds between requests.
 
 The pushshift API caps the number of results returned for a single request to 1000. Each result contains data about either a comment or a submission depending on the endpoint queried.
+
 
 ## Experiments
 
@@ -57,35 +125,34 @@ def query(endpoint, params):
 ```
 This works great if we want up to 1000 results, but if we try to ask for more than 1000 results, this will not work because of pushshift's size limit. This means that we'll have to make multiple requests until we have the desired number of results. For example, if we want to get 2500 results, then we can make 3 API calls, querying for 1000 results in the first 2, and 500 results in the third.
 
-We'll also want to call time.sleep
+We'll also want to call time.sleep with an argument of 0.5 to tell python to wait 0.5 seconds after each request.
 
 ```python
-def query_n(category, params, n = 1000):
+def query_n(endpoint, params, n = 1000):
     params.update({"sort_type": "created_utc", "sort":"desc", "size":n})
 
     results = []
     while len(results) < n:
-        query_res = query(category, {**params, "before": results[-1]["created_utc"] if results else int(time.time()) })
+        query_res = query(endpoint, {**params, "before": results[-1]["created_utc"] if results else int(time.time()) })
         if not query_res:
-            return results
+            return results![](![]())
         results.extend(query_res)
         time.sleep(0.5)
     return results
 ```
 
-Great! Now we're ready to make some requests.
-
+Great! Now that we know how to make requests, let's dive into the data.
 
 ### Topic Modelling
-
-
 
 
 ### Clustering
 
 ### Word usage trends
 
-![Comments in the subreddit r/Green that mention climate change or global warming](figures/green_comments_over_time.png)
+<img alt="Comments in the subreddit r/Green that mention climate change or global warming" src="figures/green_comments_over_time.png" width="500"/>
+<img alt="Comments in the subreddit r/climateskeptics that mention climate change or global warming" src="figures/climateskeptics_comments_over_time.png" width="500"/>
+
 
 ### Linking
 

@@ -228,21 +228,21 @@ BIG_LIST = ["350",
 
 assert len(BIG_LIST) == len(set(BIG_LIST))
 
-def query(category, params):
+def query(endpoint, params):
     
     params_string = "&".join(f"{param}={val}" for param,val in params.items())
-    url = f"https://api.pushshift.io/reddit/search/{category}/?{params_string}"
+    url = f"https://api.pushshift.io/reddit/search/{endpoint}/?{params_string}"
     print(url)
     r = requests.get(url = url)
     data = r.json()
     return data["data"]
 
-def query_n(category, params, n = 1000):
+def query_n(endpoint, params, n = 1000):
     params.update({"sort_type": "created_utc", "sort":"desc", "size":n})
 
     results = []
     while len(results) < n:
-        query_res = query(category, {**params, "before": results[-1]["created_utc"] if results else int(time.time()) })
+        query_res = query(endpoint, {**params, "before": results[-1]["created_utc"] if results else int(time.time()) })
         if not query_res:
             return results
         results.extend(query_res)
