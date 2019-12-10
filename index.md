@@ -18,11 +18,68 @@ Moving the needle on climate action will likely require us to convince climate s
 
 ## Pushshift API
 
-Reddit is special among the large social-media platforms in that it provides a free, extensive API for interacting with content on the platform. Through  API exposes nearly all the functionality that a regular user 
+Reddit is special among the large social-media platforms in that it provides a free, extensive API for interacting with content on the platform. The API exposes nearly all the functionality that a regular user would have when browsing reddit.
+
+
+The pushshift API has two active endpoints, which can be found at:
+1. https://api.pushshift.io/reddit/search/comment
+2. https://api.pushshift.io/reddit/search/submission
+
+Try following these links and inspect the results in your browser.
+
+If we go to https://api.pushshift.io/meta, we'll see that the Pushshift API has a rate limit of 120 requests per minute - that's one every 0.5 seconds. Therefore, we will want to slow our requests down by waiting 0.5 seconds between requests.
+
+The pushshift API caps the number of results returned for a single request to 1000. Each result contains data about either a comment or a submission depending on the endpoint queried.
 
 ## Experiments
 
+### Making Simple Queries
+
+Let's start by using python to programatically make a request.
+
+First, we'll want to import python's `requests` library for making API requests, as well as the `time` library so that we can make sure not to exceed the Pushshift API's rate limit.
+```python
+import requests
+import time
+```
+
+Now, let's write a function called `query` which takes in as input the name of the endpoint, which should be `"comment` or `"submission"`, as well as a dictionary of query parameters. The function should query the endpoint with the given parameters and return the result as a list of dictionaries.
+
+```python
+def query(endpoint, params):
+    
+    params_string = "&".join(f"{param}={val}" for param,val in params.items())
+    url = f"https://api.pushshift.io/reddit/search/{endpoint}/?{params_string}"
+
+    r = requests.get(url = url)
+    data = r.json()
+    return data["data"]
+```
+This works great if we want up to 1000 results, but if we try to ask for more than 1000 results, this will not work because of pushshift's size limit. This means that we'll have to make multiple requests until we have the desired number of results. For example, if we want to get 2500 results, then we can make 3 API calls, querying for 1000 results in the first 2, and 500 results in the third.
+
+We'll also want to call time.sleep
+
+```python
+def query_n(category, params, n = 1000):
+    params.update({"sort_type": "created_utc", "sort":"desc", "size":n})
+
+    results = []
+    while len(results) < n:
+        query_res = query(category, {**params, "before": results[-1]["created_utc"] if results else int(time.time()) })
+        if not query_res:
+            return results
+        results.extend(query_res)
+        time.sleep(0.5)
+    return results
+```
+
+Great! Now we're ready to make some requests.
+
+
 ### Topic Modelling
+
+
+
 
 ### Clustering
 
