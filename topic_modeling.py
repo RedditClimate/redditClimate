@@ -7,23 +7,27 @@ import gensim
 
 STOP_WORDS = set(stopwords.words('english'))
 
-def lda(docs, num_topics = 2, num_words = 4):
+def lda(docs, num_topics = 2, num_words = 4, num_passes=20):
     tokenizer = RegexpTokenizer(r'\w+')
-    # p_stemmer = PorterStemmer()
+    porter_stemmer = PorterStemmer()
 
     for i, doc in enumerate(docs):
+        # 1. Lowercase and tokenize each document
         tokens = tokenizer.tokenize(doc.lower())
+        # 2. Remove any stop words
         stopped_tokens = [tok for tok in tokens if tok not in STOP_WORDS]
-        docs[i] = stopped_tokens
-        #docs[i] = [p_stemmer.stem(stopped_tok) for stopped_tok in stopped_tokens]
+        # 3. Apply porter stemming
+        docs[i] = [porter_stemmer.stem(stopped_tok) for stopped_tok in stopped_tokens]
     
+    # Create a dictionary and a corpus for LDA
     dictionary = gensim.corpora.Dictionary(docs)
     corpus = list(map(dictionary.doc2bow, docs))
-    lda_model = gensim.models.ldamodel.LdaModel(corpus, num_topics=num_topics, id2word = dictionary, passes=20)
-    # base_form = pattern.en.lemma('ate')
+    # Train the LDA model
+    lda_model = gensim.models.ldamodel.LdaModel(corpus, num_topics = num_topics, id2word = dictionary, passes = num_passes)
+    # Return the generated topics
     return lda_model.print_topics(num_topics=num_topics, num_words = num_words)
 
-def reddit_topic_modelling():
+def reddit_topic_modeling():
     docs = []
     for i, subreddit in enumerate(CLIMATE_SUBREDDITS):
         print(f"creating doc {i} for subreddit: {subreddit}" )
@@ -32,9 +36,9 @@ def reddit_topic_modelling():
         docs.append(doc)
     return lda(docs)
 
-# reddit_topic_modelling()
+# reddit_topic_modeling()
 
-def topic_modelling_within_subreddit(subreddit):
+def topic_modeling_within_subreddit(subreddit):
     print(f"creating doc for subreddit: {subreddit}" )
     results = query_n("submission", {"subreddit": subreddit},  n = 25000)
     results.extend(query_n("comment", {"subreddit": subreddit},  n = 25000))
@@ -44,6 +48,6 @@ def topic_modelling_within_subreddit(subreddit):
         json.dump(docs, f)
     return lda(docs, num_topics = 10)
 
-# topics = topic_modelling_within_subreddit("sustainability")
+# topics = topic_modeling_within_subreddit("sustainability")
 # for topic in topics:
 #     print(topic)

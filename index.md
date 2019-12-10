@@ -145,6 +145,68 @@ Great! Now that we know how to make requests, let's dive into the data.
 
 ### Topic Modelling
 
+In natural language processing, topic modeling is the task of identifying topics within a collection of documents. Here, we use the word document to refer to any chunk of text which could be made up of arbitrarily many sentences. Given a collection of documents and a desired number of topics `num_topics`, a topic modeling algorithm can produce `num_topics` topics, each of which is characterized by a distribution over the vocabulary of words. For example, a topic could be characterized by the following distribution of words: 50% `"composting"`, 40% `"sustainability"`, 10% `"recycling"`". These words and their respective weightings indicate that one of the topics discussed by a significant proportion of documents involves composting and sustainability, with some mentions of recycling.
+
+We'll be using Latent Dirichlet Allocation (LDA), which is one of these topic modelling algorithms.
+
+In order to perform topic modeling, we'll need a few python libraries:
+
+```python
+# For Preprocessing
+from nltk.tokenize import RegexpTokenizer
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+# For Latent Dirichlet Allocation
+import gensim
+```
+
+Next, let's define a function that will preprocess the documents and perform topic modelling:
+
+```python
+def lda(docs, num_topics = 2, num_words = 4, num_passes=20):
+	# Setup
+	stop_words = set(stopwords.words('english'))
+	tokenizer = RegexpTokenizer(r'\w+')
+	porter_stemmer = PorterStemmer()
+
+	for i, doc in enumerate(docs):
+		# 1. Lowercase and tokenize each document
+		tokens = tokenizer.tokenize(doc.lower())
+		# 2. Remove any stop words
+		stopped_tokens = [tok for tok in tokens if tok not in stop_words]
+		# 3. Apply porter stemming
+		docs[i] = [porter_stemmer.stem(stopped_tok) for stopped_tok in stopped_tokens]
+    
+	# Create a dictionary and a corpus for LDA
+	dictionary = gensim.corpora.Dictionary(docs)
+	corpus = list(map(dictionary.doc2bow, docs))
+	# Train the LDA model
+	lda_model = gensim.models.ldamodel.LdaModel(corpus, num_topics = num_topics, id2word = dictionary, passes = num_passes)
+	# Return the generated topics
+	return lda_model.print_topics(num_topics=num_topics, num_words = num_words)
+``` 
+
+At this point, we're ready to apply LDA to a subreddit. In the case of reddit, we want to know what different submissions and comments are discussing, so each document for LDA can be submission or a comment from the subreddit we are investigating.
+
+```python
+def topic_modeling_within_subreddit(subreddit, num_topics = 10):
+    print(f"Creating docs for subreddit: {subreddit}" )
+    results = query_n("submission", {"subreddit": subreddit},  n = 25000)
+    results.extend(query_n("comment", {"subreddit": subreddit},  n = 25000))
+    docs = ["\n".join([result.get(field, "") for field in ["title", "selftext", "body"]]) for result in results]
+    return lda(docs, num_topics = num_topics)
+```
+
+Let's try it out! We can start by asking for the 10 topics that best characterize r/climateskeptics, and compare it with the 10 topics that best characterize r/sustainability.
+
+```python
+for subreddit in ("climateskeptics", "sustainability"):
+	print(f"Topics for subreddit: {subreddit}")
+	print(topic_modeling_within_subreddit(subreddit))
+```
+
+
+
 
 ### Clustering
 

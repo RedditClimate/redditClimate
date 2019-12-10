@@ -242,7 +242,8 @@ def query_n(endpoint, params, n = 1000):
 
     results = []
     while len(results) < n:
-        query_res = query(endpoint, {**params, "before": results[-1]["created_utc"] if results else int(time.time()) })
+        before = results[-1]["created_utc"] if results else int(time.time())
+        query_res = query(endpoint, {**params, "before": before  })
         if not query_res:
             return results
         results.extend(query_res)
