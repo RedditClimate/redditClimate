@@ -237,8 +237,10 @@ a = set(get_authors('climateskeptics'))
 b = set(get_authors('environmental_science'))
 c = set(get_authors('conservative'))
 
-print('r/climateskeptics with r/environmental_science', intersection_over_union(a, b))
-print('r/climateskeptics with r/conservative', intersection_over_union(a, c))
+print('r/climateskeptics with r/environmental_science',\
+	intersection_over_union(a, b))
+print('r/climateskeptics with r/conservative',\
+	intersection_over_union(a, c))
 ```
 
 This prints
@@ -256,7 +258,53 @@ Ideally we wouldn't have to hand-pick pairs of subreddits to compare, because in
 
 In particular, we will use [sklearn's implementation of PCA](https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html) for dimensionality reduction and [KMeans](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html) for clustering, though any number of alternative methods may apply here.
 
-Both of these methods expect data points with vector-representations, but we currently have sets of members for each subreddit. In order to create a vector for each subreddit, we simply create a vector 
+Both of these methods expect data points with vector-representations, but we currently have sets of members for each subreddit. In order to create a vector for each subreddit, we first create a set consisting of all the members which have posted across all the subreddits. Let's say this set is size, _N_ Then, for each subreddit, we create a vector of length _N_, where the ith element in the vector is a 1 if the ith member is in that subreddit, and a 0 otherwise.
+
+For example, if users alice and candice have posted in r/climateskeptics but bob, and david have not, the climate skeptics vector would look like the first row fo this table.
+
+|                          | alice | bob | candice | david |
+|--------------------------|-------|-----|---------|-------|
+|  r/climateskeptics       |   1   |  0  |    1    |   0   |
+|  r/conservative          |   1   |  0  |    0    |   1   |
+|  r/environmental_science |   0   |  1  |    1    |   1   |
+
+If we have vectors for multiple subreddits, we end up building a matrix, where each row is a vector for the the subreddits, and each column is a vector indicating where each user have been active. The code to generate this matrix lives in [clustering_subreddits.py](https://github.com/IzzyBrand/redditClimate/blob/master/clustering_subreddits.py)
+
+```python
+def generate_matrix(subreddits):
+    membership_list = {} # dict from subreddit -> membership set
+    authors = set() # a set containing all the authors accross subreddits
+
+    # for each subreddit, get the membership set
+    for s in subreddits:
+        print('Pulling authors for {}'.format(s))
+        a = get_authors(s, endpoint='submission', max_num_authors=2000)
+        authors.update(a)
+        membership_list[s] = a
+
+    authors = sorted(authors)
+    n_subreddits = len(subreddits)
+    n_authors = len(authors)
+
+    # instantiate the matrix of zeros, and mark 1s as needed
+    M = np.zeros([n_subreddits, n_authors], dtype=int)
+    for i, s in enumerate(subreddits):
+        for j, a in enumerate(authors):
+            M[i,j] = a in membership_list[s]
+
+    data = (subreddits, authors, M)
+    return data
+```
+
+This function takes a while to run, depending on how many authors we request from `get_authors` (defined in [scrape_members.py](https://github.com/IzzyBrand/redditClimate/blob/master/scrape_members.py)), and how many subreddits we pass in the argument list. Once we've built the matrix, we can use unsupervised learning to cluster subreddits based on their similarity. In this case, we'll explore sklearn's `KMeans`.
+
+```python
+def cluster_matrix(data, n=2):
+    subreddits, authors, M = data
+    return KMeans(n_clusters=n).fit_predict(M)
+```
+
+This function will return a vector of labels, one for each subreddit. Each label will be an integer specifying which cluster the subreddit has been assigned to. We could print out and read these clusters of subreddits, but let's take things a step farther and try to visualize our data. 
 
 ### Word usage trends
 

@@ -24,23 +24,25 @@ def intersection_over_union(a, b):
 # Generated a matrix where each row is a subreddit and each column is a users.
 # ones are placed when a user has posted in a subreddit recently
 def generate_matrix(subreddits):
-    m_list = {}
-    authors = set()
+    membership_list = {} # dict from subreddit -> membership set
+    authors = set() # a set containing all the authors accross subreddits
 
+    # for each subreddit, get the membership set
     for s in subreddits:
         print('Pulling authors for {}'.format(s))
         a = get_authors(s, endpoint='submission', max_num_authors=2000)
         authors.update(a)
-        m_list[s] = a
+        membership_list[s] = a
 
     authors = sorted(authors)
     n_subreddits = len(subreddits)
     n_authors = len(authors)
-    M = np.zeros([n_subreddits, n_authors], dtype=int)
 
+    # instantiate the matrix of zeros, and mark 1s as needed
+    M = np.zeros([n_subreddits, n_authors], dtype=int)
     for i, s in enumerate(subreddits):
         for j, a in enumerate(authors):
-            M[i,j] = a in m_list[s]
+            M[i,j] = a in membership_list[s]
 
     data = (subreddits, authors, M)
     return data
@@ -134,11 +136,7 @@ def draw_flat_graph(data):
 # use kmeans to cluster the subreddits based on their membership vectors
 def cluster_matrix(data, n=2):
     subreddits, authors, M = data
-
-    cluster = KMeans(n_clusters=n)
-    y = cluster.fit_predict(M)
-
-    return y
+    return KMeans(n_clusters=n).fit_predict(M)
 
 # remove subreddits from the matrix which have too few contributers
 def remove_too_small(data, n):
