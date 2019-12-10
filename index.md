@@ -225,7 +225,30 @@ We now have a set of of contributors for each subreddit — let's call these set
 
 $$J(A,B) = \frac{|A \cap B|}{|A \cup B|}$$
 
-which is a measure of similarity between sets $A$ and $B$.
+which is a measure of similarity between sets $A$ and $B$. We define the Jaccard index in [clustering_subreddits.py](https://github.com/IzzyBrand/redditClimate/blob/master/clustering_subreddits.py)
+
+```python
+def intersection_over_union(a, b):
+    return len(a & b) / len(a | b)
+```
+
+The function `get_authors(subreddit)` defined in [scrape_members.py](https://github.com/IzzyBrand/redditClimate/blob/master/scrape_members.py) pulls a unique list of authors for the specified subreddit by scraping the history of content for that subreddit. So let's test out our subreddit similarity metric!
+
+```python
+a = set(get_authors('climateskeptics'))
+b = set(get_authors('environmental_science'))
+c = set(get_authors('conservative'))
+
+print('r/climateskeptics with r/environmental_science', intersection_over_union(a, b))
+print('r/climateskeptics with r/conservative', intersection_over_union(a, c))
+```
+
+This prints
+
+```
+r/climateskeptics with r/environmental_science 0.006036217303822937
+r/climateskeptics with r/conservative 0.015847216578626575
+```
 
 ### Word usage trends
 

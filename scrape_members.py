@@ -10,7 +10,7 @@ from util import *
 
 # iterate backwards in time and to get a list of authors that have
 # posted in the subreddit
-def get_authors(subreddit, endpoint='comment', max_num_authors=None):
+def get_authors(subreddit, endpoint='comment', max_num_authors=5000):
     params = {
         'subreddit': subreddit,
         'sort': 'created_utc',

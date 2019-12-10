@@ -16,6 +16,11 @@ import networkx as nx
 
 subreddits = load_set_from_list_of_files(['subreddits/big_list_of_subreddits.txt'])
 
+
+def intersection_over_union(a, b):
+    return len(a & b) / len(a | b)
+
+
 # Generated a matrix where each row is a subreddit and each column is a users.
 # ones are placed when a user has posted in a subreddit recently
 def generate_matrix(subreddits):
@@ -145,8 +150,8 @@ def remove_too_small(data, n):
 
 
 if __name__ == '__main__':
-    # data = generate_matrix(subreddit)
-    # save('data/big_matrix.pkl', data)
+    data = generate_matrix(subreddit)
+    save('data/big_matrix.pkl', data)
 
     data = load('data/big_matrix.pkl')
     data = remove_too_small(data, 900)
@@ -154,3 +159,11 @@ if __name__ == '__main__':
 
     y = cluster_matrix(data, 5)
     pca_matrix(data, y)
+
+    # using intersection over union to examine subreddit similarity
+    # a = set(get_authors('climateskeptics'))
+    # b = set(get_authors('environmental_science'))
+    # c = set(get_authors('conservative'))
+
+    # print('r/climateskeptics with r/environmental_science', intersection_over_union(a, b))
+    # print('r/climateskeptics with r/conservative', intersection_over_union(a, c))
