@@ -1,3 +1,7 @@
+<script id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
 # Analyzing Climate Change Discourse and Communities on Reddit
 
 ## Introduction
@@ -217,7 +221,11 @@ For each subreddit that we would like to investigate we
 1. pull the _n_ most recent posts (submissions or comments)
 2. Find the unique authors which created those posts (using a python `set`)
 
-We now have a set of of contributors for each subreddit — let's call these sets $s_1 \dots s_k$ for the $k$ subreddits.
+We now have a set of of contributors for each subreddit — let's call these sets $s_1 \dots s_k$ for the $k$ subreddits. We can now consider simple set-comparison metrics, like the [Jaccard Index](https://en.wikipedia.org/wiki/Jaccard_index)
+
+$$J(A,B) = \frac{|A \cap B|}{|A \cup B|}$$
+
+which is a measure of similarity between sets $A$ and $B$.
 
 ### Word usage trends
 
