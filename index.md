@@ -329,12 +329,20 @@ Putting it all together
 ```python
 data = generate_matrix(subreddits) 
 data = remove_too_small(data, 900) # some subreddits don't have enough members
-y = cluster_matrix(data, 4) # cluster with 5 clusters
+y = cluster_matrix(data, 4) # cluster with 4 clusters
 pca_matrix(data, y)
 ```
 where `subreddits` is a list of subreddits and `remove_too_small` removes subreddit vectors with fewer than a certain number of members. This generates the plot:
 
 ![PCA clustering](figures/4_cluster_pca.png)
+
+What does this mean? The 4 clusters don't have a set meaning, as they were discovered in an unsupervised manner by KMeans, but we can attempt to interpret them by looking at the labeled subreddits
+
+<p align="center">
+	<img src="figures/cluster_labels.PNG" width="40%"></img>
+</p>
+
+From this we can make a significant observation: that the r/climateskeptics fits into the political cluster more than into any of the more scientific or activist clusters.
 
 ### Word usage trends
 
