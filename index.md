@@ -262,8 +262,8 @@ Both of these methods expect data points with vector-representations, but we cur
 
 For example, if users alice and candice have posted in r/climateskeptics but bob, and david have not, the climate skeptics vector would look like the first row fo this table.
 
-|                          | alice | bob | candice | david |
-|--------------------------|-------|-----|---------|-------|
+|                              | alice | bob | candice | david |
+|------------------------------|-------|-----|---------|-------|
 |  **r/climateskeptics**       |   1   |  0  |    1    |   0   |
 |  **r/conservative**          |   1   |  0  |    0    |   1   |
 |  **r/environmental_science** |   0   |  1  |    1    |   1   |
@@ -335,7 +335,7 @@ pca_matrix(data, y)
 where `subreddits` is a list of subreddits and `remove_too_small` removes subreddit vectors with fewer than a certain number of members. This generates the plot:
 
 <p align="center">
-# 	<img src="figures/4_cluster_pca.png" width="90%"></img>
+ 	<img src="figures/4_cluster_pca.png" width="90%"></img>
 </p>
 
 What does this mean? The 4 clusters don't have a set meaning, as they were discovered in an unsupervised manner by KMeans, but we can attempt to interpret them by looking at the labeled subreddits
@@ -398,10 +398,10 @@ def plot_histograms(num_bins):
 This function creates a normalized histogram for each word and plots the results, which are shown below for the _comment_ and _submission_ endpoints and two different subreddits
 
 <div align="center">
-<img alt="Submissions in the subreddit r/environmental_science that mention climate change or global warming" src="figures/environmental_science_submissions_over_time.png" width="49%"/>
-<img alt="Comments in the subreddit r/environmental_science that mention climate change or global warming" src="figures/environmental_science_comments_over_time.png" width="49%"/>
-<img alt="Submissions in the subreddit r/climateskeptics that mention climate change or global warming" src="figures/climateskeptics_submissions_over_time.png" width="49%"/>
-<img alt="Comments in the subreddit r/climateskeptics that mention climate change or global warming" src="figures/climateskeptics_comments_over_time.png" width="49%"/>
+<img alt="Submissions in the subreddit r/environmental_science that mention climate change or global warming" src="figures/environmental_science_submissions_over_time.png" width="45%"/>
+<img alt="Comments in the subreddit r/environmental_science that mention climate change or global warming" src="figures/environmental_science_comments_over_time.png" width="45%"/>
+<img alt="Submissions in the subreddit r/climateskeptics that mention climate change or global warming" src="figures/climateskeptics_submissions_over_time.png" width="45%"/>
+<img alt="Comments in the subreddit r/climateskeptics that mention climate change or global warming" src="figures/climateskeptics_comments_over_time.png" width="45%"/>
 </div>
 
 We notice that accross endpoints, the trendlines look fairly similar, but across subreddits there is a noticeable difference. In r/environmental_science, the prevalence of "climate science" in posts has always dominated "global warming". But in r/climateskeptics, "global warming" used to be a more common term, and over time was superceded by "climate change." In [google search trends](https://trends.google.com/trends/explore?date=2010-11-10%202019-12-10&geo=US&q=climate%20change,global%20warming), we observe a similar inversion
