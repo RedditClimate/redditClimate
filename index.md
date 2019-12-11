@@ -412,6 +412,19 @@ The terms "global warming" and "climate change" are often used interchangeably i
 
 ### Linking
 
+What websites are commonly linked to in r/climateskeptics? How does this compare with r/sustainability? Which news sources are popular amongst r/climateskeptics submitters? In this section, we'll uncover the data and try to answer these questions!
+
+One particularly common type of reddit submission is one that is made up of a title and a link. Here's an example of a r/climateskeptics submission that links to a Breitbart article:
+
+<img alt="r/climateskeptics submission with a link" src="figures/reddit_link_example.png" width="500"/>
+
+Programmatically, once we have a submission returned by a query to the pushshift API, we can access the full url by using the `"url"` field:
+`"https://www.breitbart.com/europe/2019/12/08/happer-trump-understands-climate-change-is-mostly-hype/"`
+
+However, for our purposes, we only want the domain name. This is because using the domain name will allow us to count the number of times different domains are linked to in different subreddits. To get the domain name, we can use the value in the `"domain"` field. For the example submission above, this would be `"breitbart.com"`.
+
+
+
 ### Sentiment Analysis
 
 ## Related Work

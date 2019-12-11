@@ -39,7 +39,7 @@ def reddit_topic_modeling():
 # reddit_topic_modeling()
 
 def topic_modeling_within_subreddit(subreddit):
-    print(f"creating doc for subreddit: {subreddit}" )
+    print(f"Creating doc for subreddit: {subreddit}" )
     results = query_n("submission", {"subreddit": subreddit},  n = 25000)
     results.extend(query_n("comment", {"subreddit": subreddit},  n = 25000))
     docs = ["\n".join([result.get(field, "") for field in ["title", "selftext", "body"]]) for result in results]
