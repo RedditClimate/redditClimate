@@ -335,13 +335,13 @@ pca_matrix(data, y)
 where `subreddits` is a list of subreddits and `remove_too_small` removes subreddit vectors with fewer than a certain number of members. This generates the plot:
 
 <p align="center">
-	<img src="figures/4_cluster_pca.png" width="90%"></img>
+# 	<img src="figures/4_cluster_pca.png" width="90%"></img>
 </p>
 
 What does this mean? The 4 clusters don't have a set meaning, as they were discovered in an unsupervised manner by KMeans, but we can attempt to interpret them by looking at the labeled subreddits
 
 <p align="center">
-	<img src="figures/cluster_labels.PNG" width="40%"></img>
+	<img src="figures/cluster_labels.png" width="40%"></img>
 </p>
 
 From this we can make a significant observation: that the r/climateskeptics fits into the political cluster more than into any of the more scientific or activist clusters.
@@ -406,7 +406,7 @@ This function creates a normalized histogram for each word and plots the results
 
 We notice that accross endpoints, the trendlines look fairly similar, but across subreddits there is a noticeable difference. In r/environmental_science, the prevalence of "climate science" in posts has always dominated "global warming". But in r/climateskeptics, "global warming" used to be a more common term, and over time was superceded by "climate change." In [google search trends](https://trends.google.com/trends/explore?date=2010-11-10%202019-12-10&geo=US&q=climate%20change,global%20warming), we observe a similar inversion
 
-![Climate change vs global warming](figures/google_trends.PNG)
+![Climate change vs global warming](figures/google_trends.png)
 
 The terms "global warming" and "climate change" are often used interchangeably in the public lexicon, but in a scientific context they refer to two distint things. Perhaps that the discussion in r/enviromental_science shakes the trends is indicative that the discussion in that subreddit is more scientific in nature.
 
