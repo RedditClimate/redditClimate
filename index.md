@@ -346,15 +346,71 @@ From this we can make a significant observation: that the r/climateskeptics fits
 
 ### Word usage trends
 
-<img alt="Comments in the subreddit r/Green that mention climate change or global warming" src="figures/green_comments_over_time.png" width="500"/>
-<img alt="Comments in the subreddit r/climateskeptics that mention climate change or global warming" src="figures/climateskeptics_comments_over_time.png" width="500"/>
+So far, our analysis of Reddit data has been _static_ in time; we've been agregating data across time, butt's also worth investigating how various metrics have changed over time. We chose to track word usage as measured by the frequency of posts containing that word.
 
+For the subreddit of interest, we pull all the content using `pushshift_get` from `util.py`. This is then passed to a function that iterates through each post and checks if the post contains one of our words of interest:
+
+```python
+def build_timeseries(content):
+    # content is a list of submissions or comments
+    for c in content:
+        for w in words:
+            # check if the word is in the title, body or selftext
+            if ('title' in c and w in c['title'].lower())\
+            or ('selftext' in c and w in c['selftext'].lower())\
+            or ('body' in c and w in c['body'].lower()):
+                # if so, add the created_utc field to the list
+                time_series[w].append(c['created_utc'])
+
+        # also maintain a reference of all content timestamps so that
+        # we can compare the word frequency
+        reference_time_series.append(c['created_utc'])
+```
+
+This function populates `timeseries` which is a `dict` mapping each word to a list of UTC timestamps for the posts in that subreddit containing that word. We also populate `reference_time_series` which is a list of the timestamps of all posts.
+
+If we wanted to calculate the fraction of posts which contain a certain word, say "apple", we'd simply sum up the number of timestamps for that word and divide it by the number of reference timestamps.
+
+```apple_fraction = len(timeseries["apple"]) / len(reference_time_series)```
+
+ However, since we're interested in observing how this fraction may have changed over time, we need to sum up the timestamps within temportal bins. We can use `np.histogram` to count the number of timestamps within each bin and then normalize (divide each bin of the histogram by the reference bin) to find the fraction
+
+```python
+def plot_histograms(num_bins):
+    start_time = min(reference_time_series)
+    end_time = max(reference_time_series)
+    bins = np.linspace(start_time, end_time, num_bins)
+
+    ref = np.histogram(reference_time_series, bins)[0]
+    for w in words:
+        hist = np.histogram(time_series[w], bins)[0]
+        plt.plot(utc_to_year(bins[:-1]), hist.astype(float)/ref*100, label=w)
+
+    plt.xlabel('Post Date (yr)')
+    plt.ylabel('Percentage of posts containing word')
+    plt.title('Word usage over time for r/{} {}s'.format(subreddit, endpoint))
+    plt.legend()
+    plt.plot()
+    plt.show()
+```
+This function creates a normalized histogram for each word and plots the results, which are shown below for the _comment_ and _submission_ endpoints and two different subreddits
+
+<div align="center">
+<img alt="Submissions in the subreddit r/environmental_science that mention climate change or global warming" src="figures/environmental_science_submissions_over_time.png" width="49%"/>
+<img alt="Comments in the subreddit r/environmental_science that mention climate change or global warming" src="figures/environmental_science_comments_over_time.png" width="49%"/>
+<img alt="Submissions in the subreddit r/climateskeptics that mention climate change or global warming" src="figures/climateskeptics_submissions_over_time.png" width="49%"/>
+<img alt="Comments in the subreddit r/climateskeptics that mention climate change or global warming" src="figures/climateskeptics_comments_over_time.png" width="49%"/>
+</div>
+
+We notice that accross endpoints, the trendlines look fairly similar, but across subreddits there is a noticeable difference. In r/environmental_science, the prevalence of "climate science" in posts has always dominated "global warming". But in r/climateskeptics, "global warming" used to be a more common term, and over time was superceded by "climate change." In [google search trends](https://trends.google.com/trends/explore?date=2010-11-10%202019-12-10&geo=US&q=climate%20change,global%20warming), we observe a similar inversion
+
+![Climate change vs global warming](figures/google_trends.PNG)
+
+The terms "global warming" and "climate change" are often used interchangeably in the public lexicon, but in a scientific context they refer to two distint things. Perhaps that the discussion in r/enviromental_science shakes the trends is indicative that the discussion in that subreddit is more scientific in nature.
 
 ### Linking
 
 ### Sentiment Analysis
-
-## Discussion
 
 ## Related Work
 

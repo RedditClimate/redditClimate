@@ -150,13 +150,9 @@ def remove_too_small(data, n):
 
 
 if __name__ == '__main__':
-    data = generate_matrix(subreddit)
-    save('data/big_matrix.pkl', data)
-
-    data = load('data/big_matrix.pkl')
+    data = generate_matrix(subreddits) 
     data = remove_too_small(data, 900) # some subreddits don't have enough members
-
-    y = cluster_matrix(data, 5)
+    y = cluster_matrix(data, 5) # cluster with 5 clusters
     pca_matrix(data, y)
 
     # using intersection over union to examine subreddit similarity
