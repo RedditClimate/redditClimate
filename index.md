@@ -334,7 +334,9 @@ pca_matrix(data, y)
 ```
 where `subreddits` is a list of subreddits and `remove_too_small` removes subreddit vectors with fewer than a certain number of members. This generates the plot:
 
-![PCA clustering](figures/4_cluster_pca.png)
+<p align="center">
+	<img src="figures/4_cluster_pca.png" width="90%"></img>
+</p>
 
 What does this mean? The 4 clusters don't have a set meaning, as they were discovered in an unsupervised manner by KMeans, but we can attempt to interpret them by looking at the labeled subreddits
 
