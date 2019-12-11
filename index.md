@@ -6,13 +6,13 @@ In this project, we set out to explore climate skepticism as it manifests on [Re
  1. Gain a deeper understanding of climate skepticism in a data-driven way
  2. Empower others to use Reddit data for research
 
-We present a number of experiments which were carried out using a Reddit API, provide a detailed walkthrough of the code so that others can recreate and extend our results, and endevour to visualize and analyze the data.
+We present a number of experiments which were carried out using the Pushshift Reddit API, provide a detailed walkthrough of the code so that others can recreate and extend our results, and endevour to visualize and analyze the data.
 
-To our knowledge, this is the first data-driven analysis of climate skepticism on Reddit. All of the code for this project is [available on GitHub](https://github.com/redditclimate/redditClimate)
+To our knowledge, this is the first data-driven analysis of climate skepticism on Reddit. All of the code for this project is [available on GitHub](https://github.com/redditclimate/redditClimate).
 
 ## Background
 
-The role of humans in climate change was predicted over 100 years ago by Svante Arrhenius [[ref]](https://www.rsc.org/images/Arrhenius1896_tcm18-173546.pdf), and since then a formidable body of scientific evidence has accumulated leading over 97% of scientists to conclude that human activity has a significant impact on the climate [[ref]](https://skepticalscience.com/global-warming-scientific-consensus-intermediate.htm). An ever-improving collection of climate models even allow us to estimate the exact degree to which we will cause the planet to warm, and the details of how this will impact specific ecosystems and industries. Increasingly, these predictions are being validated by an increase in extreme weather events, collapsing ecosystems, and warming temperatures around the globe.
+The role of humans in climate change was demonstrated over 100 years ago by Svante Arrhenius [[ref]](https://www.rsc.org/images/Arrhenius1896_tcm18-173546.pdf), and since then a formidable body of scientific evidence has accumulated leading over 97% of scientists to conclude that human activity has a significant impact on the climate [[ref]](https://skepticalscience.com/global-warming-scientific-consensus-intermediate.htm). An ever-improving collection of climate models even allow us to estimate the exact degree to which we will cause the planet to warm, and the details of how this will impact specific ecosystems and industries. Increasingly, these predictions are being validated by an increase in extreme weather events, collapsing ecosystems, and warming temperatures around the globe.
 
 Despite the overwhelming evidence of anthropogenic global warming (AGW), in general we have been incredibly slow to take significant action to mitigate our impact on the climate. There are **many** factors contributing to this hesitation — one of which is widespread skepticism or denial of the reality of AGW. For certain individuals and companies (most notably fossil-fuel industries), avoiding climate action is a profitable strategy in the short term. As a result, they have mounted numerous campains to spread misinformation and discredit climate science [[ref]](https://www.merchantsofdoubt.org/).
 
@@ -107,6 +107,47 @@ The result returned by the submission endpoint has a similar structure, but with
 *  `"subreddit"`: the subreddit that the comment is in
 *  `"created_utc"`: a unix timestamp indicating when the submission was created
 
+We can farther filter the results from each endpoint using API parameters. The full list of parameters can be found [here](https://pushshift.io/api-parameters/). Suppose we want to look at the titles and authors of posts in r/conservative which mention "climate change." Our parameters would be
+
+ * `filter=author,title` to return only the authors and titles
+ * `q=climage%20change` to query for content containing the phrase "climate change" (`%20` is ASCII for a space)
+ * `subreddit=conservative` to search within the r/conservative subreddit
+
+We compose all of these parameters by
+
+<p align="center"> <code>api url</code> + <code>?</code> + <code>param1</code> + <code>&</code> + <code>param2</code> + <code>&</code> + <code>param3</code> ...</p>
+
+So our finished URL would look like:
+
+<p align="center"> <a href="http://api.pushshift.io/reddit/search/submission?q=climate%20change&filter=author,title&subreddit=conservative">http://api.pushshift.io/reddit/search/submission?q=climate%20change&filter=author,title&subreddit=conservative</a> </p>
+
+And if we visit that URL in browser we get
+
+```
+{
+    "data": [
+        {
+            "author": "OneBernie2020Please",
+            "title": "Nuclear power key to solving climate change"
+        },
+        {
+            "author": "optionhome",
+            "title": "Teenage climate activist Greta Thunberg is a stunning inspiration to us all. She is in her 18th month on strike from school. \u201cYeah, uh, climate change or whatever it\u2019s called is super important to me,\u201d says James Davidson, 17, \u201cso that\u2019s definitely why I stopped going to school two years ago."
+        },
+        {
+            "author": "Foubar",
+            "title": "Elizabeth Warren Unveils Plan To End Climate Change By Performing Authentic Rain Dance"
+        },
+        {
+            "author": "YanksSensBills",
+            "title": "What do you think the GOP can do to address climate change?"
+        },
+        {
+            "author": "Foubar",
+            "title": "Climate Alarmists Want to Rebrand \"Climate Change\" to Something More Panic Inducing"
+        },
+        ...
+```
 
 If we go to <https://api.pushshift.io/meta>, we'll see that the Pushshift API has a rate limit of 120 requests per minute - that's one every 0.5 seconds. Therefore, we will want to slow our requests down by waiting 0.5 seconds between requests.
 
@@ -120,6 +161,7 @@ The pushshift API caps the number of results returned for a single request to 10
 Let's start by using python to programatically make a request.
 
 First, we'll want to import python's `requests` library for making API requests, as well as the `time` library so that we can make sure not to exceed the Pushshift API's rate limit.
+
 ```python
 import requests
 import time
@@ -130,7 +172,8 @@ Now, let's write a function called `query` which takes in as input the name of t
 ```python
 def query(endpoint, params):
     
-    params_string = "&".join(f"{param}={val}" for param,val in params.items())
+    params_string =\
+        "&".join(f"{param}={val}" for param,val in params.items())
     url = f"https://api.pushshift.io/reddit/search/{endpoint}/?{params_string}"
 
     r = requests.get(url = url)
@@ -220,8 +263,6 @@ for subreddit in ("climateskeptics", "sustainability"):
 ```
 
 
-
-
 ### Subreddit Similarity
 
 Each subreddit represents a community, so a natural line of inquiry is to examine how various subreddits relate to eachother. Perhaps the simplest approach to this task is to examine the overlap in members between two subreddits. On Reddit, an invididual's subscriptions to various subreddits are kept anonmymous. We were able to find [third party tools](https://www.redditinvestigator.com/) which can scrape subscription information for individual users, but each query takes on the order of minutes. A much quicker approach to proxy subscription information is to see which users have made submissions or comments in a subreddit.
@@ -264,7 +305,7 @@ r/climateskeptics with r/environmental_science 0.006036217303822937
 r/climateskeptics with r/conservative 0.015847216578626575
 ```
 
-Indicating that the _r/climateskeptics_ community has more in common with _r/conservative_ than it does with _r/environmental_science_.
+Indicating that the _r/climateskeptics_ community has more in common with _r/conservative_ than it does with _r/environmental\_science_.
 
 ### Clustering Subreddits
 
@@ -272,9 +313,9 @@ Ideally we wouldn't have to hand-pick pairs of subreddits to compare, because in
 
 In particular, we will use [sklearn's implementation of PCA](https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html) for dimensionality reduction and [KMeans](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html) for clustering, though any number of alternative methods may apply here.
 
-Both of these methods expect data points with vector-representations, but we currently have sets of members for each subreddit. In order to create a vector for each subreddit, we first create a set consisting of all the members which have posted across all the subreddits. Let's say this set is size, _N_ Then, for each subreddit, we create a vector of length _N_, where the ith element in the vector is a 1 if the ith member is in that subreddit, and a 0 otherwise.
+Both of these methods expect data points with vector-representations, but we currently have sets of members for each subreddit. In order to create a vector for each subreddit, we first create a set consisting of all the members which have posted across all the subreddits. Let's say this set is size, _N_. Then, for each subreddit, we create a vector of length _N_, where the ith element in the vector is a 1 if the ith member is in that subreddit, and a 0 otherwise.
 
-For example, if users alice and candice have posted in r/climateskeptics but bob, and david have not, the climate skeptics vector would look like the first row fo this table.
+For example, if users alice and candice have posted in r/climateskeptics but bob, and david have not, the vector for the r/climateskeptics subreddit would look like the first row of this table.
 
 |                              | alice | bob | candice | david |
 |------------------------------|-------|-----|---------|-------|
@@ -282,7 +323,7 @@ For example, if users alice and candice have posted in r/climateskeptics but bob
 |  **r/conservative**          |   1   |  0  |    0    |   1   |
 |  **r/environmental_science** |   0   |  1  |    1    |   1   |
 
-If we have vectors for multiple subreddits, we end up building a matrix, where each row is a vector for the the subreddits, and each column is a vector indicating where each user have been active. The code to generate this matrix lives in [clustering_subreddits.py](https://github.com/IzzyBrand/redditClimate/blob/master/clustering_subreddits.py)
+If we have vectors for multiple subreddits, we end up building a matrix, where each row is a vector for a subreddit, and each column is a vector indicating where each user has been active. The code to generate this matrix lives in [clustering_subreddits.py](https://github.com/IzzyBrand/redditClimate/blob/master/clustering_subreddits.py)
 
 ```python
 def generate_matrix(subreddits):
@@ -310,7 +351,7 @@ def generate_matrix(subreddits):
     return data
 ```
 
-This function takes a while to run, depending on how many authors we request from `get_authors` (defined in [scrape_members.py](https://github.com/IzzyBrand/redditClimate/blob/master/scrape_members.py)), and how many subreddits we pass in the argument list. Once we've built the matrix, we can use unsupervised learning to cluster subreddits based on their similarity. In this case, we'll explore sklearn's `KMeans`. It's worth noting that KMeans exhibits the implicit prior that each of our clusters should be roughly the same size, which may or may not be true depending on the data...
+This function takes a while to run, depending on how many authors we request from `get_authors` (defined in [scrape_members.py](https://github.com/IzzyBrand/redditClimate/blob/master/scrape_members.py)), and how many subreddits we pass in the argument list. Once we've built the matrix, we can use unsupervised learning to cluster subreddits based on their similarity. In this case, we'll explore sklearn's `KMeans`. It's worth noting that KMeans exhibits the implicit prior that each of our clusters should be roughly the same size, which may or may not be a valid assumption depending on the data...
 
 ```python
 def cluster_matrix(data, n=2):
@@ -362,7 +403,7 @@ From this we can make a significant observation: that the r/climateskeptics fits
 
 ### Word usage trends
 
-So far, our analysis of Reddit data has been _static_ in time; we've been agregating data across time, butt's also worth investigating how various metrics have changed over time. We chose to track word usage as measured by the frequency of posts containing that word.
+So far, our analysis of Reddit data has been _static_ in time; we've been agregating data across time, but it's also worth investigating how various metrics have changed over time. We chose to track word usage as measured by the frequency of posts containing that word.
 
 For the subreddit of interest, we pull all the content using `pushshift_get` from `util.py`. This is then passed to a function that iterates through each post and checks if the post contains one of our words of interest:
 
@@ -389,7 +430,7 @@ If we wanted to calculate the fraction of posts which contain a certain word, sa
 
 ```apple_fraction = len(timeseries["apple"]) / len(reference_time_series)```
 
- However, since we're interested in observing how this fraction may have changed over time, we need to sum up the timestamps within temportal bins. We can use `np.histogram` to count the number of timestamps within each bin and then normalize (divide each bin of the histogram by the reference bin) to find the fraction
+ However, since we're interested in observing how this fraction may have changed over time, we need to sum up the timestamps within temporal bins. We can use `np.histogram` to count the number of timestamps within each bin and then normalize (divide each bin of the histogram by the reference bin) to find the fraction
 
 ```python
 def plot_histograms(num_bins):
@@ -409,22 +450,23 @@ def plot_histograms(num_bins):
     plt.plot()
     plt.show()
 ```
+
 This function creates a normalized histogram for each word and plots the results, which are shown below for the _comment_ and _submission_ endpoints and two different subreddits
 
 <div align="center">
-<img alt="Submissions in the subreddit r/environmental_science that mention climate change or global warming" src="figures/environmental_science_submissions_over_time.png" width="45%"/>
-<img alt="Comments in the subreddit r/environmental_science that mention climate change or global warming" src="figures/environmental_science_comments_over_time.png" width="45%"/>
-<img alt="Submissions in the subreddit r/climateskeptics that mention climate change or global warming" src="figures/climateskeptics_submissions_over_time.png" width="45%"/>
-<img alt="Comments in the subreddit r/climateskeptics that mention climate change or global warming" src="figures/climateskeptics_comments_over_time.png" width="45%"/>
+	<img alt="Submissions in the subreddit r/environmental_science that mention climate change or global warming" src="figures/environmental_science_submissions_over_time.png" width="45%"/>
+	<img alt="Comments in the subreddit r/environmental_science that mention climate change or global warming" src="figures/environmental_science_comments_over_time.png" width="45%"/>
+	<img alt="Submissions in the subreddit r/climateskeptics that mention climate change or global warming" src="figures/climateskeptics_submissions_over_time.png" width="45%"/>
+	<img alt="Comments in the subreddit r/climateskeptics that mention climate change or global warming" src="figures/climateskeptics_comments_over_time.png" width="45%"/>
 </div>
 
-We notice that accross endpoints, the trendlines look fairly similar, but across subreddits there is a noticeable difference. In r/environmental_science, the prevalence of "climate science" in posts has always dominated "global warming". But in r/climateskeptics, "global warming" used to be a more common term, and over time was superceded by "climate change." In [google search trends](https://trends.google.com/trends/explore?date=2010-11-10%202019-12-10&geo=US&q=climate%20change,global%20warming), we observe a similar inversion
+We notice that accross endpoints, the trendlines look fairly similar, but across subreddits there is a noticeable difference. In r/environmental_science, the prevalence of "climate change" in posts has always dominated "global warming". But in r/climateskeptics, "global warming" used to be a more common term, and over time was superceded by "climate change." In [google search trends](https://trends.google.com/trends/explore?date=2010-11-10%202019-12-10&geo=US&q=climate%20change,global%20warming), we observe a similar inversion
 
 <p align="center">
 	<img src="figures/google_trends.png" width="80%">
 </p>
 
-The terms "global warming" and "climate change" are often used interchangeably in the public lexicon, but in a scientific context they refer to two distint things. Perhaps that the discussion in r/enviromental_science shakes the trends is indicative that the discussion in that subreddit is more scientific in nature.
+The terms "global warming" and "climate change" are often used interchangeably in the public lexicon, but in a scientific context they refer to two distint things. Perhaps that the discussion in r/enviromental_science shakes the trend is indicative that the discussion in that subreddit is more scientific in nature.
 
 ### Linking
 
@@ -523,7 +565,7 @@ Here is the output plot. The news outlets colors range from dark blue to dark re
 
 We can immediately see that r/climateskeptics submissions have a lot more right wing news outlet links. The tallest red bar represents breitbart.com, which is makes up over 40% of news links among the outlets we are considering.
 
-Another interesting find is that while most other subreddits have good representation for a lot of different news outlets, r/GlobalClimateChange seems to have disproportionately many <washingtonpost.com> links - over 60%!
+Another interesting find is that while most other subreddits have good representation for a lot of different news outlets, r/GlobalClimateChange seems to have disproportionately many <washingtonpost.com> links to the Washington Post - over 60%!
 
 
 ### Sentiment Analysis
