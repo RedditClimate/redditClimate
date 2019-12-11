@@ -1,4 +1,4 @@
-# Analyzing Climate Skepticism on Reddit
+# Climate Skepticism on Reddit
 ## Introduction
 
 In this project, we set out to explore climate skepticism as it manifests on [Reddit](https://www.reddit.com/). Our goals for this project are two-fold:
@@ -8,7 +8,7 @@ In this project, we set out to explore climate skepticism as it manifests on [Re
 
 We present a number of experiments which were carried out using a Reddit API, provide a detailed walkthrough of the code so that others can recreate and extend our results, and endevour to visualize and analyze the data.
 
-To our knowledge, this is the first data-driven analysis of climate skepticism on Reddit.
+To our knowledge, this is the first data-driven analysis of climate skepticism on Reddit. All of the code for this project is [available on GitHub](https://github.com/IzzyBrand/redditClimate)
 
 ## Background
 
@@ -440,10 +440,16 @@ Programmatically, once we have a submission returned by a query to the pushshift
 However, for our purposes, we only want the domain name. This is because using the domain name will allow us to count the number of times different domains are linked to in different subreddits. To get the domain name, we can use the value in the `"domain"` field. For the example submission above, this would be `"breitbart.com"`.
 
 
-
 ### Sentiment Analysis
 
 ## Related Work
 
-Before settling on 
+Before settling on Reddit, we considered a number of other social media platforms and sources of data. We decided to pursue Reddit, because we found that a number of studies have already attempted to characterize climate skepticism on those platforms. We'll mention a number of those papers and articles here, as they informed our experiments and provide interesting perspectives
+
+ * [S. Stepchenkova et al.](https://www.mdpi.com/2071-1050/9/11/2019/pdf) analyze the quality of crowdsourced data vs data collected by paid workers about climate change discourse on Twitter.
+ * [John Swain's Medium Article](https://medium.com/neo4j/climate-change-twitter-analysis-2016-cbc6c1fd8f1a) provides some beautiful visualizations and an in depth discussion of the flow of climate conversation through the Twitter graph
+ * [This UN Global Pulse study](https://www.unglobalpulse.org/projects/Twitter-Climate-Change) found that the Global Climate March and Global Climate Summit in 2014 significantly increased the amount of conversation about climate change on twitter
+ * [E. Bloomfield et al.](https://www.tandfonline.com/doi/full/10.1080/17524032.2018.1527378?needAccess=true) studies climate skeptic communities on Facebook. They find that posters provide links to give the appearance of credibility
+ * [Dawn Stover's article](https://thebulletin.org/2019/08/why-facebook-youtube-and-twitter-are-bad-for-the-climate/) explains how Facebook and Twitter facilitate the spread of climate missinformation
+ * [This Environmental Data & Governance Initiative report](https://envirodatagov.org/new-digital-landscape/) reveals that the term "climate change" has been dissapearing from government websites under the Trump Administration	
 
