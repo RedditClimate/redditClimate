@@ -8,7 +8,7 @@ In this project, we set out to explore climate skepticism as it manifests on [Re
 
 We present a number of experiments which were carried out using a Reddit API, provide a detailed walkthrough of the code so that others can recreate and extend our results, and endevour to visualize and analyze the data.
 
-To our knowledge, this is the first data-driven analysis of climate skepticism on Reddit. All of the code for this project is [available on GitHub](https://github.com/IzzyBrand/redditClimate)
+To our knowledge, this is the first data-driven analysis of climate skepticism on Reddit. All of the code for this project is [available on GitHub](https://github.com/redditclimate/redditClimate)
 
 ## Background
 
