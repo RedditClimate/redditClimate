@@ -42,7 +42,7 @@ The pushshift API has two active endpoints, which can be found at:
 
 Try following these links and inspect the results in your browser. For the comments endpoint, you should see something like this:
 
-```JSON
+```json
 {
     "data": [
         {
@@ -438,6 +438,92 @@ Programmatically, once we have a submission returned by a query to the pushshift
 `"https://www.breitbart.com/europe/2019/12/08/happer-trump-understands-climate-change-is-mostly-hype/"`
 
 However, for our purposes, we only want the domain name. This is because using the domain name will allow us to count the number of times different domains are linked to in different subreddits. To get the domain name, we can use the value in the `"domain"` field. For the example submission above, this would be `"breitbart.com"`.
+
+<img alt="Most popular domains in r/climateskeptics submissions" src="figures/domains_plot.png" width="500"/>
+
+The [Pew Research Center](https://www.pewresearch.org/) conducted a [study](https://www.journalism.org/2014/10/21/section-1-media-sources-distinct-favorites-emerge-on-the-left-and-right/) in which they rated the political stances of news outlets on the left-right political spectrum. Here's their diagram illustrating their findings:
+
+<img alt="News outlets from left to right" src="figures/pewstudy.png" width="500"/>
+
+Let's use this as a starting point, by defining a list with some of the more popular of these news domains from left to right:
+
+```python
+WORLD_DOMAINS_LEFT_TO_RIGHT = ["nytimes.com", # the most left wing news outlet
+                               "bbc.com", "huffingtonpost.com", "washingtonpost.com",         
+                               "cnn.com",
+                               "nbcnews",
+                               "news.google.com", "abcnews.go.com",
+                               "wsj.com", # a centrist news outlet
+                               "foxnews.com",
+                               "breitbart.com" # the most right wing news outlet
+                               ]
+```
+
+We'll also want to choose a list of subreddits to investigate. Let's use a bunch of climate and environment related subreddits:
+
+```python
+CLIMATE_SUBREDDITS = ["globalwarming", 
+						  "globalclimatechange",
+						  "environment",
+						  "renewableenergy",
+						  "climateskeptics",
+						  "climatenews",
+						  "climatechange",
+						  "climateactionplan"
+						  ]
+```
+
+Great, now let's write some code to count the number of submissions that link to each news outlet, by subreddit.
+
+```python
+def news_domains_by_subreddit(category, subreddits, domains):
+    results = query_n(category, {"subreddit": ",".join(subreddits), "domain": ",".join(domains) }, n=10000)
+    subreddit_counter = Counter([ r["subreddit"] for r in results])
+
+    most_common_subreddits = [subreddit for subreddit,_ in subreddit_counter.most_common(10)]
+    results = query_n(category, {"subreddit": ",".join(most_common_subreddits), "domain": ",".join(domains) }, n=20000)
+    subreddit_counter = Counter([ r["subreddit"] for r in results])
+    counter = Counter([(r["domain"], r["subreddit"]) for r in results])
+
+    for r in results:
+        r["count"] = counter[(r["domain"], r["subreddit"])]/subreddit_counter[r["subreddit"]]
+
+    return pd.DataFrame.from_records(results)[["subreddit", "domain", "count"]]
+```
+```python
+def plot_news_domains_by_subreddit(subreddit_domains_df):
+    color_palette = sns.color_palette("coolwarm", len(domains))
+    plt.subplots(1,1, figsize=(15,10))
+    ax = sns.barplot(y = "count",
+                     x = "subreddit", 
+                     orient = "v",
+                     hue = "domain", 
+                     hue_order = domains,
+                     data = subreddit_domains_df, 
+                     palette = color_palette)
+    
+    ax.set_ylabel(f"# of news links")
+    ax.set_xlabel(f"subreddit")
+    plt.legend(frameon = False, loc='upper right')
+    plt.tight_layout()
+    ax.get_figure().savefig("subreddit_news_horizontal.png")
+```
+
+Finally, let's run our code and plot the results:
+
+```python
+df = news_domains_by_subreddit("submission", CLIMATE_SUBREDDITS, LEFT_TO_RIGHT)
+plot_news_domains_by_subreddit(df)
+```
+
+Here is the output plot. The news outlets colors range from dark blue to dark red where dark blue represents left wing politics and dark red represents right wing politics.
+
+<img alt="News outlets from left to right by subreddit" src="figures/subreddit_news_horizontal.png" width="500"/>
+
+
+We can immediately see that r/climateskeptics submissions have a lot more right wing news outlet links. The tallest red bar represents breitbart.com, which is makes up over 40% of news links among the outlets we are considering.
+
+Another interesting find is that while most other subreddits have good representation for a lot of different news outlets, r/GlobalClimateChange seems to have disproportionately many <washingtonpost.com> links - over 60%!
 
 
 ### Sentiment Analysis
