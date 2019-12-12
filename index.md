@@ -486,7 +486,15 @@ Programmatically, once we have a submission returned by a query to the pushshift
 
 However, for our purposes, we only want the domain name. This is because using the domain name will allow us to count the number of times different domains are linked to in different subreddits. To get the domain name, we can use the value in the `"domain"` field. For the example submission above, this would be `"breitbart.com"`.
 
+#### Popular Websites by Subreddit
+
+Here are the top 7 domains linked to from r/climateskeptics:
+
 <img alt="Most popular domains in r/climateskeptics submissions" src="figures/domains_plot.png" width="500"/>
+
+If you're feeling adventurous, try going to some of those websites and delving into the world of climate skepticism (maybe not for too long).
+
+#### News
 
 The [Pew Research Center](https://www.pewresearch.org/) conducted a [study](https://www.journalism.org/2014/10/21/section-1-media-sources-distinct-favorites-emerge-on-the-left-and-right/) in which they rated the political stances of news outlets on the left-right political spectrum. Here's their diagram illustrating their findings:
 
