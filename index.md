@@ -689,12 +689,12 @@ def plot_sentiment_analysis(sentiment_df = None, sort_score_type = "pos"):
     
     for i,subreddit in enumerate(sorted_subreddits):
         sns.barplot(
-        		x="subreddit",
-        		y="score",
-        		hue="score_type",
-        		hue_order=["neg", "neu", "pos"],
-        		data=sentiment_df[sentiment_df["subreddit"] == subreddit],
-        		ax = ax_array[i])
+        	x="subreddit",
+        	y="score",
+        	hue="score_type",
+        	hue_order=["neg", "neu", "pos"],
+        	data=sentiment_df[sentiment_df["subreddit"] == subreddit],
+        	ax = ax_array[i])
         ax.set(xlabel=subreddit)
         
     f.savefig(f"sentiment_plot_{sort_key}.png")
