@@ -1,15 +1,19 @@
-from reddit import query_n
+from reddit import query_n, BIG_LIST
 
-import nltk
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from nltk.tokenize import sent_tokenize
-from pprint import pprint
+import pandas as pd
 
 def sentiment_analysis(category, subreddit, n = float("inf")):
     all_sentences = []
     results = query_n(category, {"subreddit": subreddit}, n=n)
     for result in results:
-        submission_text = "\n".join([result[field] for field in ("title", "selftext", "body") if field in result ])
+        text_fields = ["title", "selftext", "body"]
+        submissions = [result[field] for field in text_fields if field in result]
+        submission_text = "\n".join()
         sentences = sent_tokenize(submission_text)
         all_sentences.extend(sentences)
 
@@ -33,11 +37,11 @@ def sentiment_analysis(category, subreddit, n = float("inf")):
 def exec_sentiment_analysis(n = float("inf")):
     records = []
     for i, subreddit in enumerate(BIG_LIST):
-        #sentiment_analysis("submission" subreddit)
         score_avgs = sentiment_analysis("comment", subreddit, n = n)
         for score_type in ["compound", "neu", "pos", "neg"]:
             score = score_avgs[score_type]
-            records.append({"subreddit": subreddit, "score_type": score_type, "score": score})
+            record = {"subreddit": subreddit, "score_type": score_type, "score": score}
+            records.append(record)
 
     sentiment_df = pd.DataFrame.from_records(records)
     sentiment_df.to_pickle("sentiment_df.pickle")
@@ -46,19 +50,37 @@ def exec_sentiment_analysis(n = float("inf")):
 
 # exec_sentiment_analysis(n = 10000)
 
-def plot_sentiment_analysis(sentiment_df = None, sort_key = "pos"):
+def plot_sentiment_analysis(sentiment_df = None, sort_score_type = "pos"):
     sentiment_df = sentiment_df or pd.read_pickle("sentiment_df.pickle")
-    print(sentiment_df.head())
+    
     plt.clf()
-    f, axs = plt.subplots(15,15, figsize=(60, 60), sharex = True, sharey = True, squeeze = True)
+    f, axs = plt.subplots(
+                    15,
+                    15,
+                    figsize=(60, 60),
+                    sharex = True,
+                    sharey = True,
+                    squeeze = True)
+    
     ax_array = axs.flatten()
-    # subreddits = BIG_LIST # random.sample(BIG_LIST, 150)
-    sorted_subreddits = sorted(BIG_LIST, reverse = True, key = lambda subreddit:sentiment_df[(sentiment_df["subreddit"] == subreddit) & (sentiment_df["score_type"] == sort_key)].iloc[0]["score"] )
+    def sorter(subreddit):
+        df = sentiment_df
+        select_subreddit = df["subreddit"] == subreddit
+        select_score_type = df["score_type"] == sort_score_type
+        return df[select_subreddit & select_score_type].iloc[0]["score"]
+        
+    sorted_subreddits = sorted(BIG_LIST, reverse = True, key = sorter)
+    
     for i,subreddit in enumerate(sorted_subreddits):
-        print(i, subreddit)
-        ax = ax_array[i]
-        sns.barplot(x="subreddit", y="score", hue="score_type", hue_order=["neg", "neu", "pos"],  data=sentiment_df[sentiment_df["subreddit"] == subreddit], ax = ax)
+        sns.barplot(
+                    x="subreddit",
+                    y="score",
+                    hue="score_type",
+                    hue_order=["neg", "neu", "pos"],
+                    data=sentiment_df[sentiment_df["subreddit"] == subreddit],
+                    ax = ax_array[i])
         ax.set(xlabel=subreddit)
+        
     f.savefig(f"sentiment_plot_{sort_key}.png")
 
 # for sort_key in ["pos", "neg", "neu"]:
@@ -79,4 +101,5 @@ def top_domains(category, subreddit = "climateskeptics", n=float("inf"), top_k =
 
     f.savefig("domains_plot.png")
 
+ 
 # top_domains("submission", n = float("inf"), top_k = 7)

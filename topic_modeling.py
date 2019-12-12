@@ -1,5 +1,4 @@
 from reddit import query_n
-
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer

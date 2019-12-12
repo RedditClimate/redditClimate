@@ -1,20 +1,8 @@
 from reddit import query_n
+from seaborn import sns
+from collections import Counter
 
-WORLD_DOMAINS = ["news.google.com", 
-                 "news.yahoo.com", 
-                 "cnn.com", 
-                 "bbc.com", 
-                 "nytimes.com", 
-                 "theguardian.com",
-                 "dailymail.co.uk", 
-                 "washingtonpost.com",
-                 "indiatimes.com", 
-                 "huffingtonpost.com", 
-                 "foxnews.com",
-                 "usatoday.com", 
-                 "wsj.com", 
-                 "nbcnews.com", 
-                 "abcnews.go.com"]
+import matplotlib.pyplot as plt
 
 LEFT_TO_RIGHT = ["nytimes.com",
                  "bbc.com", "huffingtonpost.com", "washingtonpost.com",         
@@ -26,43 +14,28 @@ LEFT_TO_RIGHT = ["nytimes.com",
                  "breitbart.com",
                  ]
 
-DOMAINS = ["cnn.com", 
-           "nytimes.com",
-           "huffpost.com",
-           "foxnews.com",
-           "usatoday.com",
-           "reuters.com",
-           "politico.com",
-           "yahoo.com/news",
-           "npr.org",
-           "latimes.com",
-           "breitbart.com",
-           "nypost.com",
-           "nbcnews.com",
-           "cbsnews.com",
-           "abcnews.go.com",
-           "cbslocal.com",
-           "newsweek.com", "nydailynews.com", "chicagotribune.com", "denverpost.com", "boston.com", "theonion.com", "newsmax.com", "seattletimes.com", "mercurynews.com", "stltoday.com", "washingtontimes.com", "miamiherald.com", "ktla.com", "newsday.com", "suntimes.com", "gothamist.com", "abc13.com", "wtop.com", "seattlepi.com", "nbcnewyork.com", "observer.com", "abc7news.com", "wgntv.com", "nbclosangeles.com", "westword.com", "news12.com", "kxan.com", "kdvr.com", "phillyvoice.com", "fox2now.com", "dailyherald.com", "nbcchicago.com", "twincities.com", "nbcsandiego.com", "nbcdfw.com", "laweekly.com"]
-
 def news_domains_by_subreddit(category, subreddits, domains):
-    results = query_n(category, {"subreddit": ",".join(subreddits), "domain": ",".join(domains) }, n=10000)
+    params = {"subreddit": ",".join(subreddits), "domain": ",".join(domains) }
+    results = query_n(category, params, n=10000)
     subreddit_counter = Counter([ r["subreddit"] for r in results])
 
-    most_common_subreddits = [subreddit for subreddit,_ in subreddit_counter.most_common(10)]
-    results = query_n(category, {"subreddit": ",".join(most_common_subreddits), "domain": ",".join(domains) }, n=20000)
+    news_subreddits = [subreddit for subreddit,_ in subreddit_counter.most_common(10)]
+    params = {"subreddit": ",".join(news_subreddits), "domain": ",".join(domains) }
+    results = query_n(category, params, n=20000)
     subreddit_counter = Counter([ r["subreddit"] for r in results])
     counter = Counter([(r["domain"], r["subreddit"]) for r in results])
 
     for r in results:
-        r["count"] = counter[(r["domain"], r["subreddit"])]/subreddit_counter[r["subreddit"]]
+        domain_count = counter[(r["domain"], r["subreddit"])]
+        subreddit_total = subreddit_counter[r["subreddit"]]
+        r["proportion"] = domain_count/subreddit_total
 
     return pd.DataFrame.from_records(results)[["subreddit", "domain", "count"]]
-
 
 def plot_news_domains_by_subreddit(subreddit_domains_df):
     color_palette = sns.color_palette("coolwarm", len(domains))
     plt.subplots(1,1, figsize=(15,10))
-    ax = sns.barplot(y = "count",
+    ax = sns.barplot(y = "proportion",
                      x = "subreddit", 
                      orient = "v",
                      hue = "domain", 
@@ -76,11 +49,10 @@ def plot_news_domains_by_subreddit(subreddit_domains_df):
     plt.tight_layout()
     ax.get_figure().savefig("subreddit_news_horizontal.png")
 
-
 # SECTION: News domains left to right for some climate change related subreddits
 CLIMATE_SUBREDDITS = ["globalwarming", "globalclimatechange", "environment", "renewableenergy", "climateskeptics", "climatenews", "climatechange", "climateactionplan"]
 df = news_domains_by_subreddit("submission", CLIMATE_SUBREDDITS, LEFT_TO_RIGHT)
-plot_news_domains_by_subreddit(df)
+plot_news_domains_by_subreddit(df, LEFT_TO_RIGHT)
 
 
 

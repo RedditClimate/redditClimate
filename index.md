@@ -238,7 +238,11 @@ def lda(docs, num_topics = 2, num_words = 4, num_passes=20):
 	dictionary = gensim.corpora.Dictionary(docs)
 	corpus = list(map(dictionary.doc2bow, docs))
 	# Train the LDA model
-	lda_model = gensim.models.ldamodel.LdaModel(corpus, num_topics = num_topics, id2word = dictionary, passes = num_passes)
+	lda_model = gensim.models.ldamodel.LdaModel(
+					corpus,
+					num_topics = num_topics,
+					id2word = dictionary,
+					passes = num_passes)
 	# Return the generated topics
 	return lda_model.print_topics(num_topics=num_topics, num_words = num_words)
 ``` 
@@ -250,7 +254,8 @@ def topic_modeling_within_subreddit(subreddit, num_topics = 10):
     print(f"Creating docs for subreddit: {subreddit}" )
     results = query_n("submission", {"subreddit": subreddit},  n = 25000)
     results.extend(query_n("comment", {"subreddit": subreddit},  n = 25000))
-    docs = ["\n".join([result.get(field, "") for field in ["title", "selftext", "body"]]) for result in results]
+    text_fields = ["title", "selftext", "body"]
+    docs = ["\n".join([result.get(field, "") for field in text_fields]) for result in results]
     return lda(docs, num_topics = num_topics)
 ```
 
@@ -515,20 +520,34 @@ CLIMATE_SUBREDDITS = ["globalwarming",
 						  ]
 ```
 
-Great, now let's write some code to count the number of submissions that link to each news outlet, by subreddit.
+Great, now let's write some code, starting with some imports:
+
+```python
+from reddit import query_n
+from seaborn import sns
+from collections import Counter
+
+import matplotlib.pyplot as plt
+```
+
+Now, let's write code to count the number of submissions that link to each news outlet, by subreddit.
 
 ```python
 def news_domains_by_subreddit(category, subreddits, domains):
-    results = query_n(category, {"subreddit": ",".join(subreddits), "domain": ",".join(domains) }, n=10000)
+    params = {"subreddit": ",".join(subreddits), "domain": ",".join(domains) }
+    results = query_n(category, params, n=10000)
     subreddit_counter = Counter([ r["subreddit"] for r in results])
 
-    most_common_subreddits = [subreddit for subreddit,_ in subreddit_counter.most_common(10)]
-    results = query_n(category, {"subreddit": ",".join(most_common_subreddits), "domain": ",".join(domains) }, n=20000)
+    news_subreddits = [subreddit for subreddit,_ in subreddit_counter.most_common(10)]
+    params = {"subreddit": ",".join(news_subreddits), "domain": ",".join(domains) }
+    results = query_n(category, params, n=20000)
     subreddit_counter = Counter([ r["subreddit"] for r in results])
     counter = Counter([(r["domain"], r["subreddit"]) for r in results])
 
     for r in results:
-        r["count"] = counter[(r["domain"], r["subreddit"])]/subreddit_counter[r["subreddit"]]
+        domain_count = counter[(r["domain"], r["subreddit"])]
+        subreddit_total = subreddit_counter[r["subreddit"]]
+        r["proportion"] = domain_count/subreddit_total
 
     return pd.DataFrame.from_records(results)[["subreddit", "domain", "count"]]
 ```
@@ -536,7 +555,7 @@ def news_domains_by_subreddit(category, subreddits, domains):
 def plot_news_domains_by_subreddit(subreddit_domains_df):
     color_palette = sns.color_palette("coolwarm", len(domains))
     plt.subplots(1,1, figsize=(15,10))
-    ax = sns.barplot(y = "count",
+    ax = sns.barplot(y = "proportion",
                      x = "subreddit", 
                      orient = "v",
                      hue = "domain", 
@@ -560,7 +579,7 @@ plot_news_domains_by_subreddit(df)
 
 Here is the output plot. The news outlets colors range from dark blue to dark red where dark blue represents left wing politics and dark red represents right wing politics.
 
-<img alt="News outlets from left to right by subreddit" src="figures/subreddit_news_horizontal.png" width="500"/>
+<img alt="News outlets from left to right by subreddit" src="figures/subreddit_news_horizontal.png" width="100%"/>
 
 
 We can immediately see that r/climateskeptics submissions have a lot more right wing news outlet links. The tallest red bar represents breitbart.com, which is makes up over 40% of news links among the outlets we are considering.
@@ -569,6 +588,126 @@ Another interesting find is that while most other subreddits have good represent
 
 
 ### Sentiment Analysis
+
+Sentiment analysis is a technique that allows us to quantify the sentiment of different sentences. For example, we can use sentiment analysis to analyze how much positivity, negativity and neutrality a sentence has. Sentiment analysis models are usually supervised, meaning that they are learned or "trained" from labeled data. For example, we could train a sentiment analysis on the following labeled data:
+
+| Sentence | negativity | neutrality | positivity |
+|------------------------------|-------|-----|---------|
+|  We cleaned 40 pounds of trash from our beach ! ([link](https://www.reddit.com/r/DeTrashed/comments/e6ys1g/we_cleaned_40_pounds_of_trash_from_our_beach/)) |  0.0  |  1.0  |    0.0    |
+|  Getting reaaally tired of these alarmist headlines all over the media in my country. ([link](https://www.reddit.com/r/climateskeptics/comments/e96wig/getting_reaaally_tired_of_these_alarmist/))  |   0.182   |  0.818  |    0.0    |
+
+In practice, we would need a lot more labeled examples like these in order to train a performant sentiment analyzer. Unfortuntatly, we don't have any such labeled examples (we don't have any positivity/negativity/neutrality scores)!
+
+Luckily, others have compiled large datasets of sentences and manually labeled them with sentiment scores. They then trained the sentiment analysis model on that data and made the trained model available to the public (that's us)!
+
+The specific model we're going to use is called [VADER](https://www.nltk.org/api/nltk.sentiment.html#module-nltk.sentiment.vader), and is part of python's Natural Language Toolkit (nltk).
+
+Let's start by importing the the sentiment analyzer and a few other libraries. In particular we'll also want to import nltk's sentence tokenizer, which splits text into sentences and splits each sentence into a list of tokens, which can be words or punctuation.
+
+```python
+from reddit import query_n, BIG_LIST
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from nltk.tokenize import sent_tokenize
+import pandas as pd
+```
+
+Next, let's define a function that queries submissions and comments, performs sentiment analysis, and then computes the averages positivity/negativity/neutrality scores accross all of the sentences of each subreddit:
+
+```python
+def sentiment_analysis(category, subreddit, n = float("inf")):
+    all_sentences = []
+    results = query_n(category, {"subreddit": subreddit}, n=n)
+    for result in results:
+        text_fields = ["title", "selftext", "body"]
+        submissions = [result[field] for field in text_fields if field in result]
+        submission_text = "\n".join()
+        sentences = sent_tokenize(submission_text)
+        all_sentences.extend(sentences)
+
+    sentiment_analyzer = SentimentIntensityAnalyzer()
+    score_sums = {"pos": 0, "neu": 0, "neg": 0, "compound": 0}
+    
+    if not all_sentences:
+        print(f"Skipping {subreddit} (no submissions)")
+        return score_sums
+
+    for sentence in all_sentences:
+        polarity = sentiment_analyzer.polarity_scores(sentence)
+        for score_category in polarity:
+            score_sums[score_category] += polarity[score_category]
+    print("Subreddit:", subreddit)
+    score_avgs = {k:round(v/len(all_sentences), 3) for k,v in score_sums.items()}
+    print(f"Num sentences: {len(all_sentences)}")
+    return score_avgs
+```
+
+Now, let's call our `sentiment_analysis` function on each of the climate related subreddits from our curated list:
+
+```python
+def exec_sentiment_analysis(n = float("inf")):
+    records = []
+    for i, subreddit in enumerate(BIG_LIST):
+        score_avgs = sentiment_analysis("comment", subreddit, n = n)
+        for score_type in ["compound", "neu", "pos", "neg"]:
+            score = score_avgs[score_type]
+            record = {"subreddit": subreddit, "score_type": score_type, "score": score}
+            records.append(record)
+
+    sentiment_df = pd.DataFrame.from_records(records)
+    sentiment_df.to_pickle("sentiment_df.pickle")
+
+    return sentiment_df
+```
+
+Finally, let's write some code to plot the subreddits in order of their sentiment scores (e.g. most negative subreddits, most positive subreddits):
+
+```python
+def plot_sentiment_analysis(sentiment_df = None, sort_score_type = "pos"):
+    sentiment_df = sentiment_df or pd.read_pickle("sentiment_df.pickle")
+    
+    plt.clf()
+    f, axs = plt.subplots(
+    				15,
+    				15,
+    				figsize=(60, 60),
+    				sharex = True,
+    				sharey = True,
+    				squeeze = True)
+    
+    ax_array = axs.flatten()
+    def sorter(subreddit):
+    	df = sentiment_df
+    	select_subreddit = df["subreddit"] == subreddit
+    	select_score_type = df["score_type"] == sort_score_type
+    	return df[select_subreddit & select_score_type].iloc[0]["score"]
+    	
+    sorted_subreddits = sorted(BIG_LIST, reverse = True, key = sorter)
+    
+    for i,subreddit in enumerate(sorted_subreddits):
+        sns.barplot(
+        			x="subreddit",
+        			y="score",
+        			hue="score_type",
+        			hue_order=["neg", "neu", "pos"],
+        			data=sentiment_df[sentiment_df["subreddit"] == subreddit],
+        			ax = ax_array[i])
+        ax.set(xlabel=subreddit)
+        
+    f.savefig(f"sentiment_plot_{sort_key}.png")
+```
+
+
+
+The Top 5 Most __POSITIVE__ Subreddits:
+<img alt="r/climateskeptics submission with a link" src="figures/sentiment_top_pos.png" width="100%"/>
+
+The Top 5 Most __NEGATIVE__ Subreddits:
+<img alt="r/climateskeptics submission with a link" src="figures/sentiment_top_neg.png" width="100%"/>
+
 
 ## Related Work
 
